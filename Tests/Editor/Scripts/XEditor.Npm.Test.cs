@@ -8,6 +8,7 @@ using EFramework.Editor;
 using EFramework.Utility;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 /// <summary>
 /// XEditor.Npm 模块的单元测试类。
@@ -103,6 +104,10 @@ console.log(JSON.stringify({
     [Test]
     public void Execute()
     {
+        // 有些 npm 版本会通过 stderr 输出 npm notice... 信息
+        // 这里忽略这些信息
+        LogAssert.ignoreFailingMessages = true;
+
         // 创建npm任务
         var npm = new XEditor.Npm(id: "my-task", script: "my-task", runasync: false, cwd: testDir, batchmode: Application.isBatchMode);
 
