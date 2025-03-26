@@ -34,7 +34,7 @@ XEditor.Prefs 提供了编辑器首选项的加载和应用功能，支持自动
 
 #### 2.1 面板定义
 ```csharp
-public class MyPrefsPanel : XPrefs.IPanel
+public class MyPrefsPanel : XPrefs.Panel
 {
     // 面板所属区域
     public override string Section => "MySection";
@@ -52,7 +52,7 @@ public class MyPrefsPanel : XPrefs.IPanel
 
 #### 2.2 生命周期
 ```csharp
-public class MyPrefsPanel : XPrefs.IPanel
+public class MyPrefsPanel : XPrefs.Panel
 {
     // 面板激活时调用
     public override void OnActivate(string searchContext, VisualElement root)

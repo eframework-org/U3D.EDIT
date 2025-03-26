@@ -49,7 +49,7 @@ namespace EFramework.Editor
         /// 2. 自定义面板
         /// 
         /// 2.1 面板定义
-        ///     public class MyPrefsPanel : XPrefs.IPanel
+        ///     public class MyPrefsPanel : XPrefs.Panel
         ///     {
         ///         // 面板所属区域
         ///         public override string Section => "MySection";
@@ -65,7 +65,7 @@ namespace EFramework.Editor
         ///     }
         /// 
         /// 2.2 生命周期
-        ///     public class MyPrefsPanel : XPrefs.IPanel
+        ///     public class MyPrefsPanel : XPrefs.Panel
         ///     {
         ///         // 面板激活时调用
         ///         public override void OnActivate(string searchContext, VisualElement root)
@@ -156,7 +156,7 @@ namespace EFramework.Editor
             public static string Root { get => Const.GetCoustom<RootAttribute, string>(ref root, ref rootProp, XFile.PathJoin(XEnv.ProjectPath, "ProjectSettings", "Preferences")); }
 
             /// <summary>
-            /// 配置后缀，用于标识首选项文件类型
+            /// 配置后缀，用于标识首选项文件类型。
             /// </summary>
             public const string Extension = ".json";
 
@@ -167,12 +167,12 @@ namespace EFramework.Editor
             internal const string MenuPath = "EFramework/Preferences #r";
 
             /// <summary>
-            /// 项目设置菜单路径，定义了在 Project Settings 窗口中的位置
+            /// 项目设置菜单路径，定义了在 Project Settings 窗口中的位置。
             /// </summary>
             internal const string ProjMenu = "Project/EFramework/Preferences";
 
             /// <summary>
-            /// 打开首选项设置窗口
+            /// 打开首选项设置窗口。
             /// </summary>
             [MenuItem(MenuPath)]
             public static void Open() { SettingsService.OpenProjectSettings(ProjMenu); }
@@ -180,9 +180,9 @@ namespace EFramework.Editor
             internal static Prefs Instance = new();
 
             /// <summary>
-            /// 提供首选项提供者组，用于 Unity 编辑器设置系统的注册
+            /// 提供首选项提供者组，用于 Unity 编辑器设置系统的注册。
             /// </summary>
-            /// <returns>包含本首选项提供者的数组</returns>
+            /// <returns>包含本首选项提供者的数组。</returns>
             [SettingsProviderGroup]
             internal static SettingsProvider[] Provider() { return new SettingsProvider[] { Instance }; }
 
@@ -191,37 +191,37 @@ namespace EFramework.Editor
 
             #region 类型成员
             /// <summary>
-            /// 当前活动的首选项目标对象
+            /// 当前活动的首选项目标对象。
             /// </summary>
             internal XPrefs.IBase activeTarget;
 
             /// <summary>
-            /// 当前选中的首选项索引
+            /// 当前选中的首选项索引。
             /// </summary>
             internal int activeIndex = -1;
 
             /// <summary>
-            /// 所有首选项面板列表
+            /// 所有首选项面板列表。
             /// </summary>
             internal List<XPrefs.IPanel> panels;
 
             /// <summary>
-            /// 首选项面板缓存，按类型索引
+            /// 首选项面板缓存，按类型索引。
             /// </summary>
             internal readonly Dictionary<Type, XPrefs.IPanel> panelCache = new();
 
             /// <summary>
-            /// 按区域分组的首选项面板列表
+            /// 按区域分组的首选项面板列表。
             /// </summary>
             internal List<List<XPrefs.IPanel>> sections;
 
             /// <summary>
-            /// 各区域折叠状态字典
+            /// 各区域折叠状态字典。
             /// </summary>
             internal readonly Dictionary<string, bool> foldouts = new();
 
             /// <summary>
-            /// 首选项窗口的根视觉元素
+            /// 首选项窗口的根视觉元素。
             /// </summary>
             internal VisualElement visualElement;
 
@@ -240,9 +240,16 @@ namespace EFramework.Editor
                 {
                     try
                     {
-                        if (!panelCache.TryGetValue(type, out var obj) || obj == null)
+                        if (!panelCache.TryGetValue(type, out var obj) || (obj is ScriptableObject sobj && sobj == null))
                         {
-                            obj = ScriptableObject.CreateInstance(type) as XPrefs.IPanel;
+                            if (type.IsSubclassOf(typeof(ScriptableObject)))
+                            {
+                                obj = ScriptableObject.CreateInstance(type) as XPrefs.IPanel;
+                            }
+                            else
+                            {
+                                obj = Activator.CreateInstance(type) as XPrefs.IPanel;
+                            }
                             if (obj != null)
                             {
                                 panelCache[type] = obj;
@@ -447,7 +454,7 @@ namespace EFramework.Editor
                         {
                             foreach (var panel in section)
                             {
-                                if (panel == null) { Reload(); return; } // 构建后ScriptableObject为空，故重载之
+                                if (panel is ScriptableObject sobj && sobj == null) { Reload(); return; } // 构建后ScriptableObject为空，故重载之
                                 try
                                 {
                                     panel.Target = activeTarget;
