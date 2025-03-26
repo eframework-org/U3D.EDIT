@@ -1,9 +1,9 @@
-# U3D.EDIT
+# EFramework Editor for Unity
 
 [![Version](https://img.shields.io/npm/v/org.eframework.u3d.edit)](https://www.npmjs.com/package/org.eframework.u3d.edit)
 [![Downloads](https://img.shields.io/npm/dm/org.eframework.u3d.edit)](https://www.npmjs.com/package/org.eframework.u3d.edit)
 
-U3D.EDIT 是一个编辑器扩展工具库，提供了任务系统、配置管理、事件系统、快速构建等功能，用于提高开发效率。
+EFramework Editor for Unity 是一个编辑器扩展工具库，提供了任务系统、配置管理、事件系统、快速构建等功能，用于提高开发效率。
 
 ## 功能特性
 
