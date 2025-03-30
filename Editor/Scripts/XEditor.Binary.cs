@@ -28,7 +28,7 @@ namespace EFramework.Editor
         /// <remarks>
         /// <code>
         /// 功能特性
-        /// - 多平台构建：支持 Windows、Linux、OSX、Android、iOS、WebGL 等平台
+        /// - 多平台构建：支持 Windows、Linux、macOS、Android、iOS、WebGL 等平台
         /// - 构建配置管理：通过 BuildProfile 管理构建配置，支持版本号、签名证书等参数设置
         /// - 构建流程管理：包含预处理、构建、后处理三个阶段，支持符号表备份等功能
         /// - 可视化管理：支持构建文件的搜索、重命名、运行和目录管理
@@ -414,7 +414,7 @@ namespace EFramework.Editor
                     if (XEnv.Platform == XEnv.PlatformType.Android) file = XFile.PathJoin(output, Name + ".apk");
                     else if (XEnv.Platform == XEnv.PlatformType.Windows) file = XFile.PathJoin(output, Name, Name + ".exe");
                     else if (XEnv.Platform == XEnv.PlatformType.Linux) file = XFile.PathJoin(output, Name, Name + ".bin");
-                    else if (XEnv.Platform == XEnv.PlatformType.OSX) file = XFile.PathJoin(output, Name, Name + ".app");
+                    else if (XEnv.Platform == XEnv.PlatformType.macOS) file = XFile.PathJoin(output, Name, Name + ".app");
                     else file = XFile.PathJoin(output, Name);
                 }
                 #endregion
@@ -433,7 +433,7 @@ namespace EFramework.Editor
                     PlayerSettings.iOS.buildNumber = Code;
                     if (!string.IsNullOrEmpty(SigningTeam)) PlayerSettings.iOS.appleDeveloperTeamID = SigningTeam;
                 }
-                else if (XEnv.Platform == XEnv.PlatformType.OSX)
+                else if (XEnv.Platform == XEnv.PlatformType.macOS)
                 {
                     PlayerSettings.macOS.buildNumber = Code;
                 }
@@ -474,7 +474,7 @@ namespace EFramework.Editor
 
                 if (XEnv.Platform == XEnv.PlatformType.Windows) rret = BuildPipeline.BuildPlayer(Scenes, File, BuildTarget.StandaloneWindows64, Options);
                 else if (XEnv.Platform == XEnv.PlatformType.Linux) rret = BuildPipeline.BuildPlayer(Scenes, File, BuildTarget.StandaloneLinux64, Options);
-                else if (XEnv.Platform == XEnv.PlatformType.OSX) rret = BuildPipeline.BuildPlayer(Scenes, File, BuildTarget.StandaloneOSX, Options);
+                else if (XEnv.Platform == XEnv.PlatformType.macOS) rret = BuildPipeline.BuildPlayer(Scenes, File, BuildTarget.StandaloneOSX, Options);
                 else if (XEnv.Platform == XEnv.PlatformType.Android) rret = BuildPipeline.BuildPlayer(Scenes, File, BuildTarget.Android, Options);
                 else if (XEnv.Platform == XEnv.PlatformType.iOS) rret = BuildPipeline.BuildPlayer(Scenes, File, BuildTarget.iOS, Options);
                 else if (XEnv.Platform == XEnv.PlatformType.Browser) rret = BuildPipeline.BuildPlayer(Scenes, File, BuildTarget.WebGL, Options);
@@ -497,7 +497,7 @@ namespace EFramework.Editor
                 var brustDst = XFile.PathJoin(symbolPath, "BurstDebugInformation_DoNotShip");
                 var symbolSrc = "";
                 var symbolDst = XFile.PathJoin(symbolPath, "BackUpThisFolder_ButDontShipItWithYourGame");
-                if (XEnv.Platform == XEnv.PlatformType.Windows || XEnv.Platform == XEnv.PlatformType.Linux || XEnv.Platform == XEnv.PlatformType.OSX)
+                if (XEnv.Platform == XEnv.PlatformType.Windows || XEnv.Platform == XEnv.PlatformType.Linux || XEnv.Platform == XEnv.PlatformType.macOS)
                 {
                     var temp = XFile.PathJoin(Output, Name);
                     if (XFile.HasDirectory(temp))
@@ -612,7 +612,7 @@ namespace EFramework.Editor
                 if (string.IsNullOrEmpty(name)) name = Name;
                 if (XEnv.Platform == XEnv.PlatformType.Windows ||
                     XEnv.Platform == XEnv.PlatformType.Linux ||
-                    XEnv.Platform == XEnv.PlatformType.OSX)
+                    XEnv.Platform == XEnv.PlatformType.macOS)
                 {
                     var dirs = Directory.GetDirectories(path);
                     var bin = "";

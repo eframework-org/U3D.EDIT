@@ -137,7 +137,7 @@ public class TestXEditorBinary
             {
                 Assert.That(PlayerSettings.iOS.buildNumber, Is.EqualTo(handler.Code), "应正确设置 iOS 构建号");
             }
-            else if (XEnv.Platform == XEnv.PlatformType.OSX)
+            else if (XEnv.Platform == XEnv.PlatformType.macOS)
             {
                 Assert.That(PlayerSettings.macOS.buildNumber, Is.EqualTo(handler.Code), "应正确设置 macOS 构建号");
             }

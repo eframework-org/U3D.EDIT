@@ -476,9 +476,9 @@ namespace EFramework.Editor
             {
                 GUILayout.BeginHorizontal(EditorStyles.helpBox);
                 if (GUILayout.Button(new GUIContent("Save", EditorGUIUtility.FindTexture("SaveActive")))) EditorApplication.delayCall += () => Save();
-                var hint = !XFile.HasFile(XPrefs.IAsset.Uri) || activeTarget.Dirty;
                 var ocolor = GUI.color;
-                if (hint) GUI.color = Color.cyan;
+                if (!XFile.HasFile(XPrefs.IAsset.Uri)) GUI.color = Color.cyan;
+                else if (activeTarget.Dirty) GUI.color = Color.yellow;
                 if (GUILayout.Button(new GUIContent("Apply", EditorGUIUtility.FindTexture("SaveFromPlay")))) EditorApplication.delayCall += () => Save(true);
                 GUI.color = ocolor;
                 GUILayout.EndHorizontal();

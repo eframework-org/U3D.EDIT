@@ -7,7 +7,7 @@ XEditor.Binary 提供了一套完整的构建流程管理系统，简化了多�
 
 ## 功能特性
 
-- 多平台构建：支持 Windows、Linux、OSX、Android、iOS、WebGL 等平台
+- 多平台构建：支持 Windows、Linux、macOS、Android、iOS、WebGL 等平台
 - 构建配置管理：通过 BuildProfile 管理构建配置，支持版本号、签名证书等参数设置
 - 构建流程管理：包含预处理、构建、后处理三个阶段，支持符号表备份等功能
 - 可视化管理：支持构建文件的搜索、重命名、运行和目录管理

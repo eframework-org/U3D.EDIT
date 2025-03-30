@@ -113,13 +113,13 @@ public class TestXEditorTasksInit
     }
 
     /// <summary>
-    /// OSX 平台特定任务测试。
+    /// macOS 平台特定任务测试。
     /// </summary>
-    [XEditor.Tasks.Worker(test: true, name: "Test OSX", group: "Test", tooltip: "OSX only task", platform: XEnv.PlatformType.OSX)]
-    private class TestOSXTask : XEditor.Tasks.Worker
+    [XEditor.Tasks.Worker(test: true, name: "Test macOS", group: "Test", tooltip: "macOS only task", platform: XEnv.PlatformType.macOS)]
+    private class TestmacOSTask : XEditor.Tasks.Worker
     {
-        [XEditor.Tasks.Param("osxParam", "OSX param", "osxDefault", platform: XEnv.PlatformType.OSX)]
-        internal string osxParam;
+        [XEditor.Tasks.Param("macosParam", "macOS param", "macosDefault", platform: XEnv.PlatformType.macOS)]
+        internal string macosParam;
         public override void Process(XEditor.Tasks.Report report) { }
     }
 
@@ -177,7 +177,7 @@ public class TestXEditorTasksInit
                 ""build"": ""echo build"",
                 ""windows"": ""echo windows"",
                 ""linux"": ""echo linux"",
-                ""osx"": ""echo osx""
+                ""macos"": ""echo macos""
             },
             ""scriptsMeta"": {
                 ""test"": {
@@ -230,17 +230,17 @@ public class TestXEditorTasksInit
                         }
                     ]
                 },
-                ""osx"": {
-                    ""name"": ""OSX Script"",
+                ""macos"": {
+                    ""name"": ""macOS Script"",
                     ""group"": ""Platform"",
                     ""priority"": 3,
-                    ""platform"": ""OSX"",
+                    ""platform"": ""macOS"",
                     ""params"": [
                         {
-                            ""name"": ""osxParam"",
-                            ""tooltip"": ""OSX Parameter"",
-                            ""default"": ""osx"",
-                            ""platform"": ""OSX""
+                            ""name"": ""macosParam"",
+                            ""tooltip"": ""macOS Parameter"",
+                            ""default"": ""macos"",
+                            ""platform"": ""macOS""
                         }
                     ]
                 }
@@ -283,7 +283,7 @@ public class TestXEditorTasksInit
         // 验证平台特定任务
         var windowsTask = XEditor.Tasks.Metas.Find(m => m.Name == "Windows Script");
         var linuxTask = XEditor.Tasks.Metas.Find(m => m.Name == "Linux Script");
-        var osxTask = XEditor.Tasks.Metas.Find(m => m.Name == "OSX Script");
+        var macosTask = XEditor.Tasks.Metas.Find(m => m.Name == "macOS Script");
 
         if (XEnv.Platform == XEnv.PlatformType.Windows)
         {
@@ -291,8 +291,8 @@ public class TestXEditorTasksInit
                 "Windows 平台应该有 Windows Script 任务");
             Assert.That(linuxTask, Is.Null,
                 "Windows 平台不应该有 Linux Script 任务");
-            Assert.That(osxTask, Is.Null,
-                "Windows 平台不应该有 OSX Script 任务");
+            Assert.That(macosTask, Is.Null,
+                "Windows 平台不应该有 macOS Script 任务");
             if (windowsTask != null)
             {
                 Assert.That(windowsTask.Params[0].Platform, Is.EqualTo(XEnv.PlatformType.Windows),
@@ -305,26 +305,26 @@ public class TestXEditorTasksInit
                 "Linux 平台不应该有 Windows Script 任务");
             Assert.That(linuxTask, Is.Not.Null,
                 "Linux 平台应该有 Linux Script 任务");
-            Assert.That(osxTask, Is.Null,
-                "Linux 平台不应该有 OSX Script 任务");
+            Assert.That(macosTask, Is.Null,
+                "Linux 平台不应该有 macOS Script 任务");
             if (linuxTask != null)
             {
                 Assert.That(linuxTask.Params[0].Platform, Is.EqualTo(XEnv.PlatformType.Linux),
                     "Linux 任务参数应该是 Linux 平台特定的");
             }
         }
-        else if (XEnv.Platform == XEnv.PlatformType.OSX)
+        else if (XEnv.Platform == XEnv.PlatformType.macOS)
         {
             Assert.That(windowsTask, Is.Null,
-                "OSX 平台不应该有 Windows Script 任务");
+                "macOS 平台不应该有 Windows Script 任务");
             Assert.That(linuxTask, Is.Null,
-                "OSX 平台不应该有 Linux Script 任务");
-            Assert.That(osxTask, Is.Not.Null,
-                "OSX 平台应该有 OSX Script 任务");
-            if (osxTask != null)
+                "macOS 平台不应该有 Linux Script 任务");
+            Assert.That(macosTask, Is.Not.Null,
+                "macOS 平台应该有 macOS Script 任务");
+            if (macosTask != null)
             {
-                Assert.That(osxTask.Params[0].Platform, Is.EqualTo(XEnv.PlatformType.OSX),
-                    "OSX 任务参数应该是 OSX 平台特定的");
+                Assert.That(macosTask.Params[0].Platform, Is.EqualTo(XEnv.PlatformType.macOS),
+                    "macOS 任务参数应该是 macOS 平台特定的");
             }
         }
 
@@ -372,7 +372,7 @@ public class TestXEditorTasksInit
         XEditor.Tasks.Init.Parse(test: true, parseClass: true);
 
         var testTasks = XEditor.Tasks.Metas.FindAll(m => m.Group == "Test");
-        Assert.That(testTasks.Where(t => !t.Name.Contains("Windows") && !t.Name.Contains("Linux") && !t.Name.Contains("OSX")).Count(), Is.EqualTo(3),
+        Assert.That(testTasks.Where(t => !t.Name.Contains("Windows") && !t.Name.Contains("Linux") && !t.Name.Contains("macOS")).Count(), Is.EqualTo(3),
             "应该解析出三个通用测试任务");
 
         Assert.That(testTasks[0].Priority, Is.LessThan(testTasks[1].Priority),
@@ -407,7 +407,7 @@ public class TestXEditorTasksInit
         // 验证平台特定任务
         var windowsTask = XEditor.Tasks.Metas.Find(m => m.Name == "Test Windows");
         var linuxTask = XEditor.Tasks.Metas.Find(m => m.Name == "Test Linux");
-        var osxTask = XEditor.Tasks.Metas.Find(m => m.Name == "Test OSX");
+        var macosTask = XEditor.Tasks.Metas.Find(m => m.Name == "Test macOS");
 
         if (XEnv.Platform == XEnv.PlatformType.Windows)
         {
@@ -415,8 +415,8 @@ public class TestXEditorTasksInit
                 "Windows 平台应该有 Windows 任务");
             Assert.That(linuxTask, Is.Null,
                 "Windows 平台不应该有 Linux 任务");
-            Assert.That(osxTask, Is.Null,
-                "Windows 平台不应该有 OSX 任务");
+            Assert.That(macosTask, Is.Null,
+                "Windows 平台不应该有 macOS 任务");
             if (windowsTask != null)
             {
                 var winParam = windowsTask.Params.Find(p => p.Name == "winParam");
@@ -432,8 +432,8 @@ public class TestXEditorTasksInit
                 "Linux 平台不应该有 Windows 任务");
             Assert.That(linuxTask, Is.Not.Null,
                 "Linux 平台应该有 Linux 任务");
-            Assert.That(osxTask, Is.Null,
-                "Linux 平台不应该有 OSX 任务");
+            Assert.That(macosTask, Is.Null,
+                "Linux 平台不应该有 macOS 任务");
             if (linuxTask != null)
             {
                 var linuxParam = linuxTask.Params.Find(p => p.Name == "linuxParam");
@@ -443,21 +443,21 @@ public class TestXEditorTasksInit
                     "linuxParam 应该是 Linux 平台特定的");
             }
         }
-        else if (XEnv.Platform == XEnv.PlatformType.OSX)
+        else if (XEnv.Platform == XEnv.PlatformType.macOS)
         {
             Assert.That(windowsTask, Is.Null,
-                "OSX 平台不应该有 Windows 任务");
+                "macOS 平台不应该有 Windows 任务");
             Assert.That(linuxTask, Is.Null,
-                "OSX 平台不应该有 Linux 任务");
-            Assert.That(osxTask, Is.Not.Null,
-                "OSX 平台应该有 OSX 任务");
-            if (osxTask != null)
+                "macOS 平台不应该有 Linux 任务");
+            Assert.That(macosTask, Is.Not.Null,
+                "macOS 平台应该有 macOS 任务");
+            if (macosTask != null)
             {
-                var osxParam = osxTask.Params.Find(p => p.Name == "osxParam");
-                Assert.That(osxParam, Is.Not.Null,
-                    "OSX 任务应该有 osxParam 参数");
-                Assert.That(osxParam.Platform, Is.EqualTo(XEnv.PlatformType.OSX),
-                    "osxParam 应该是 OSX 平台特定的");
+                var macosParam = macosTask.Params.Find(p => p.Name == "macosParam");
+                Assert.That(macosParam, Is.Not.Null,
+                    "macOS 任务应该有 macosParam 参数");
+                Assert.That(macosParam.Platform, Is.EqualTo(XEnv.PlatformType.macOS),
+                    "macosParam 应该是 macOS 平台特定的");
             }
         }
 
