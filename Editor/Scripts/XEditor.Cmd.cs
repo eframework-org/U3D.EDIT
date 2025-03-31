@@ -245,10 +245,12 @@ namespace EFramework.Editor
                     proc.Start();
                     proc.OutputDataReceived += (_, evt) => // 使用异步监听的方式，避免阻塞
                     {
+                        if (evt.Data == null) return;
                         lock (outputs) outputs.Enqueue(new Output() { Data = Regex.Replace(evt.Data, @"\x1b\[[0-9;]*[a-zA-Z]", ""), Error = false });
                     };
                     proc.ErrorDataReceived += (_, evt) =>
                     {
+                        if (evt.Data == null) return;
                         lock (outputs) outputs.Enqueue(new Output() { Data = Regex.Replace(evt.Data, @"\x1b\[[0-9;]*[a-zA-Z]", ""), Error = true });
                     };
                     proc.BeginOutputReadLine();
