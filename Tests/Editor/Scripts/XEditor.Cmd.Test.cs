@@ -94,15 +94,16 @@ public class TestXEditorCmd
     [TestCase(true, false, "succeed", 0, TestName = "验证成功命令执行，启用打印输出，无进度显示")]
     [TestCase(false, true, "failed", 1, TestName = "验证失败命令执行，无打印输出，启用进度显示")]
     [TestCase(true, true, "failed", 1, TestName = "验证失败命令执行，启用打印输出和进度显示")]
-    public async Task Run(bool print, bool progress, string cmd, int code)
+    public void Run(bool print, bool progress, string cmd, int code)
     {
         if (print)
         {
             if (code != 0) LogAssert.Expect(LogType.Error, new Regex(@"XEditor\.Cmd\.Run: finish .* with code: .*"));
             else LogAssert.Expect(LogType.Log, new Regex(@"XEditor\.Cmd\.Run: finish .* with code: .*"));
         }
-        var result = await XEditor.Cmd.Run(bin: XEditor.Cmd.Find(cmd, testDir), print: print, progress: progress);
-        Assert.That(result.Code, Is.EqualTo(code), "命令应返回正确的退出码");
+        var task = XEditor.Cmd.Run(bin: XEditor.Cmd.Find(cmd, testDir), print: print, progress: progress);
+        task.Wait();
+        Assert.That(task.Result.Code, Is.EqualTo(code), "命令应返回正确的退出码");
     }
 }
 #endif
