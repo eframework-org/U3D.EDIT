@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 #if UNITY_INCLUDE_TESTS
-using System.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine;
 using EFramework.Editor;
