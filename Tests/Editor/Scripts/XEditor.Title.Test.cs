@@ -4,14 +4,10 @@
 
 #if UNITY_INCLUDE_TESTS
 using System;
-using System.Threading.Tasks;
-using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using EFramework.Editor;
 using EFramework.Utility;
-using System.Linq;
-using UnityEngine;
 
 public class TestXEditorTitle
 {
@@ -27,10 +23,10 @@ public class TestXEditorTitle
     }
 
     [TearDown]
-    public async Task Cleanup()
+    public void Cleanup()
     {
         XEditor.Title.isRefreshing = false;
-        await XEditor.Title.Refresh();
+        _ = XEditor.Title.Refresh();
     }
 
     /// <summary>
@@ -101,17 +97,17 @@ public class TestXEditorTitle
     /// 3. 非 Git 仓库环境
     /// </remarks>
     [Test]
-    public async Task Refresh()
+    public void Refresh()
     {
         XEditor.Title.isRefreshing = false;
-        await XEditor.Title.Refresh();
+        _ = XEditor.Title.Refresh();
 
         var prefsDirty = !XFile.HasFile(XPrefs.Asset.File) || !XPrefs.Asset.Keys.MoveNext() ? "*" : "";
         var expectedPrefs = $"[Prefs{prefsDirty}: {XEnv.Author}/{XEnv.Channel}/{XEnv.Version}/{XEnv.Mode}/{XLog.Level()}]";
         Assert.That(XEditor.Title.prefsLabel, Is.EqualTo(expectedPrefs), "Should update preferences label");
 
-        var gitResult = await XEditor.Cmd.Run("git", print: false, args: new string[] { "rev-parse", "--git-dir" });
-        if (gitResult.Code == 0) Assert.That(XEditor.Title.gitBranch, Is.Not.Empty); // 在 Git 仓库中
+        var task = XEditor.Cmd.Run("git", print: false, args: new string[] { "rev-parse", "--git-dir" });
+        if (task.Result.Code == 0) Assert.That(XEditor.Title.gitBranch, Is.Not.Empty); // 在 Git 仓库中
         else Assert.That(XEditor.Title.gitBranch, Is.Empty); // 不在 Git 仓库中
     }
 }
