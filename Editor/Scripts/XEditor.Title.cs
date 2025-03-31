@@ -2,12 +2,13 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-#if UNITY_6000_0_OR_NEWER
 using System;
 using UnityEditor;
-using UnityEngine;
 using EFramework.Utility;
 using System.Threading.Tasks;
+#if UNITY_6000_0_OR_NEWER
+using UnityEngine;
+#endif
 
 namespace EFramework.Editor
 {
@@ -83,11 +84,31 @@ namespace EFramework.Editor
                 EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
                 EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 
+#if UNITY_6000_0_OR_NEWER
                 EditorApplication.focusChanged -= OnFocusChanged;
                 EditorApplication.focusChanged += OnFocusChanged;
 
                 EditorApplication.updateMainWindowTitle -= SetTitle;
                 EditorApplication.updateMainWindowTitle += SetTitle;
+#else
+                var focusChangedEvent = typeof(EditorApplication).GetField("focusChanged", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                if (focusChangedEvent != null)
+                {
+                    var focusChangedDelegate = (System.Action<bool>)focusChangedEvent.GetValue(null);
+                    focusChangedDelegate -= OnFocusChanged;
+                    focusChangedDelegate += OnFocusChanged;
+                    focusChangedEvent.SetValue(null, focusChangedDelegate);
+                }
+
+                var updateMainWindowTitleEvent = typeof(EditorApplication).GetField("updateMainWindowTitle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                if (updateMainWindowTitleEvent != null)
+                {
+                    var updateMainWindowTitleDelegate = (System.Action<object>)updateMainWindowTitleEvent.GetValue(null);
+                    updateMainWindowTitleDelegate -= SetTitle;
+                    updateMainWindowTitleDelegate += SetTitle;
+                    updateMainWindowTitleEvent.SetValue(null, updateMainWindowTitleDelegate);
+                }
+#endif
 
                 _ = Refresh();
             }
@@ -114,11 +135,13 @@ namespace EFramework.Editor
             /// 设置 Unity 编辑器的标题，添加首选项信息和 Git 版本控制信息。
             /// </summary>
             /// <param name="des">应用程序标题描述符。</param>
-            internal static void SetTitle(ApplicationTitleDescriptor des)
+            internal static void SetTitle(object des)
             {
+#if UNITY_6000_0_OR_NEWER
+                var descriptor = des as ApplicationTitleDescriptor;
                 if (!string.IsNullOrEmpty(prefsLabel))
                 {
-                    des.title += $" - {prefsLabel}";
+                    descriptor.title += $" - {prefsLabel}";
                 }
                 if (!string.IsNullOrEmpty(gitBranch))
                 {
@@ -131,8 +154,34 @@ namespace EFramework.Editor
                         if (gitPullCount > 0) gitInfo += $" ↓{gitPullCount}";
                     }
                     gitInfo += "]";
-                    des.title += $" - {gitInfo}";
+                    descriptor.title += $" - {gitInfo}";
                 }
+#else
+                if (des == null) return;
+
+                var titleField = des.GetType().GetField("title", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (titleField == null) return;
+
+                var currentTitle = (string)titleField.GetValue(des);
+                if (!string.IsNullOrEmpty(prefsLabel))
+                {
+                    currentTitle += $" - {prefsLabel}";
+                }
+                if (!string.IsNullOrEmpty(gitBranch))
+                {
+                    var gitDirty = gitDirtyCount > 0 ? "*" : "";
+                    var gitInfo = $"[Git{gitDirty}: {gitBranch}";
+                    if (isRefreshing) gitInfo += " ⟳";
+                    else
+                    {
+                        if (gitPushCount > 0) gitInfo += $" ↑{gitPushCount}";
+                        if (gitPullCount > 0) gitInfo += $" ↓{gitPullCount}";
+                    }
+                    gitInfo += "]";
+                    currentTitle += $" - {gitInfo}";
+                }
+                titleField.SetValue(des, currentTitle);
+#endif
             }
 
             /// <summary>
@@ -147,7 +196,15 @@ namespace EFramework.Editor
                     var prefsDirty = !XFile.HasFile(XPrefs.Asset.File) || !XPrefs.Asset.Keys.MoveNext() ? "*" : "";
                     prefsLabel = $"[Prefs{prefsDirty}: {XEnv.Author}/{XEnv.Channel}/{XEnv.Version}/{XEnv.Mode}/{XLog.Level()}]";
                     isRefreshing = true;
-                    await XLoom.RunInMain(() => EditorApplication.UpdateMainWindowTitle());
+                    await XLoom.RunInMain(() =>
+                    {
+#if UNITY_6000_0_OR_NEWER
+                        EditorApplication.UpdateMainWindowTitle();
+#else
+                        var updateMainWindowTitleMethod = typeof(EditorApplication).GetMethod("UpdateMainWindowTitle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                        if (updateMainWindowTitleMethod != null) updateMainWindowTitleMethod.Invoke(null, null);
+#endif
+                    });
 
                     gitBranch = "";
                     gitPushCount = 0;
@@ -183,11 +240,18 @@ namespace EFramework.Editor
                 finally
                 {
                     isRefreshing = false;
-                    await XLoom.RunInMain(() => EditorApplication.UpdateMainWindowTitle());
+                    await XLoom.RunInMain(() =>
+                    {
+#if UNITY_6000_0_OR_NEWER
+                        EditorApplication.UpdateMainWindowTitle();
+#else
+                        var updateMainWindowTitleMethod = typeof(EditorApplication).GetMethod("UpdateMainWindowTitle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                        if (updateMainWindowTitleMethod != null) updateMainWindowTitleMethod.Invoke(null, null);
+#endif
+                    });
                 }
             }
         }
     }
 }
-#endif
 

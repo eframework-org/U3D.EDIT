@@ -2,13 +2,16 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-#if UNITY_INCLUDE_TESTS && UNITY_6000_0_OR_NEWER
+#if UNITY_INCLUDE_TESTS
 using System;
 using System.Threading.Tasks;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using EFramework.Editor;
 using EFramework.Utility;
+using System.Linq;
+using UnityEngine;
 
 public class TestXEditorTitle
 {
@@ -55,8 +58,21 @@ public class TestXEditorTitle
     [TestCase("[Prefs: Test/Channel/1.0.0/Debug/Info]", "main", 1, 0, 0, false, "Unity - [Prefs: Test/Channel/1.0.0/Debug/Info] - [Git*: main]", Description = "首选项和 Git 信息组合的标题")]
     public void SetTitle(string prefsLabel, string gitBranch, int gitDirtyCount, int gitPushCount, int gitPullCount, bool isRefreshing, string expected)
     {
+#if UNITY_6000_0_OR_NEWER
         var descriptor = new ApplicationTitleDescriptor("Unity", "Editor", "6000.0.32f1", "Personal", false) { title = "Unity" };
+#else
+        // 使用反射创建 ApplicationTitleDescriptor 实例
+        var descriptorType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ApplicationTitleDescriptor");
+        var constructors = descriptorType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
+        // 查找匹配的构造函数
+        var constructor = constructors.FirstOrDefault(c => c.GetParameters().Length == 6);
+        var descriptor = constructor.Invoke(new object[] { "Unity", "Editor", "6000.0.32f1", "", "Personal", false });
+
+        // 使用反射设置 title 属性
+        var titleProperty = descriptor.GetType().GetField("title", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        titleProperty.SetValue(descriptor, "Unity");
+#endif
         XEditor.Title.prefsLabel = prefsLabel;
         XEditor.Title.gitBranch = gitBranch;
         XEditor.Title.gitDirtyCount = gitDirtyCount;
@@ -65,8 +81,14 @@ public class TestXEditorTitle
         XEditor.Title.isRefreshing = isRefreshing;
 
         XEditor.Title.SetTitle(descriptor);
-
+#if UNITY_6000_0_OR_NEWER
         Assert.That(descriptor.title, Is.EqualTo(expected));
+#else
+        // 使用反射获取 title 属性值
+        var actualTitle = titleProperty.GetValue(descriptor) as string;
+        Debug.Log("Title:" + actualTitle);
+        Assert.That(actualTitle, Is.EqualTo(expected));
+#endif
     }
 
     /// <summary>
