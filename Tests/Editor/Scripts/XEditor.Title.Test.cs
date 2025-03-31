@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-#if UNITY_INCLUDE_TESTS
+#if UNITY_INCLUDE_TESTS && UNITY_6000_0_OR_NEWER
 using System;
 using System.Threading.Tasks;
 using NUnit.Framework;
