@@ -31,7 +31,7 @@ namespace EFramework.Editor
         /// 1. 用户交互
         /// 
         /// 1.1 打开界面
-        /// - 通过菜单：EFramework/Preferences
+        /// - 通过菜单：Tools/EFramework/Preferences
         /// - 快捷键：Ctrl+R
         /// - 代码调用：XEditor.Prefs.Open()
         /// 
@@ -164,7 +164,7 @@ namespace EFramework.Editor
             /// 菜单路径，定义了在 Unity 主菜单中的位置。
             /// 快捷键为 #r（Ctrl+R）
             /// </summary>
-            internal const string MenuPath = "EFramework/Preferences #r";
+            internal const string MenuPath = "Tools/EFramework/Preferences #r";
 
             /// <summary>
             /// 项目设置菜单路径，定义了在 Project Settings 窗口中的位置。

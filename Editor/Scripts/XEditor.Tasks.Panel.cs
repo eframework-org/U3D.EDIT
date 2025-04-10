@@ -25,7 +25,7 @@ namespace EFramework.Editor
     /// 
     /// 使用手册
     /// 1. 界面操作
-    /// - 通过菜单 EFramework/Task Runner 或快捷键 Ctrl+P 打开面板
+    /// - 通过菜单 Tools/EFramework/Task Runner 或快捷键 Ctrl+P 打开面板
     /// - 使用折叠按钮控制任务组和任务的显示
     /// - 通过复选框选择要执行的任务
     /// - 点击执行按钮运行选中的任务
@@ -605,7 +605,7 @@ namespace EFramework.Editor
                 /// 菜单路径，定义了在 Unity 主菜单中的位置。
                 /// 快捷键为 #p（Ctrl+P）。
                 /// </summary>
-                internal const string MenuPath = "EFramework/Task Runner #p";
+                internal const string MenuPath = "Tools/EFramework/Task Runner #p";
 
                 /// <summary>
                 /// 任务窗口实例。

@@ -15,7 +15,7 @@ XEditor.Prefs 提供了编辑器首选项的加载和应用功能，支持自动
 ### 1. 用户交互
 
 #### 1.1 打开界面
-- 通过菜单：`EFramework/Preferences`
+- 通过菜单：`Tools/EFramework/Preferences`
 - 快捷键：`Ctrl+R`
 - 代码调用：`XEditor.Prefs.Open()`
 
