@@ -58,7 +58,9 @@ namespace EFramework.Editor
         /// 
         /// 2. 自定义任务
         /// 
-        /// 2.1 实现任务
+        /// 2.1 定义任务
+        /// 
+        /// 2.1.1 基于 C# Attribute 定义任务
         ///     [XEditor.Tasks.Worker(&quot;我的任务&quot;, &quot;任务分组&quot;, &quot;任务说明&quot;)]
         ///     public class MyTask : XEditor.Tasks.Worker
         ///     {
@@ -77,6 +79,61 @@ namespace EFramework.Editor
         ///             report.Result = XEditor.Tasks.Result.Succeeded;
         ///         }
         ///     }
+        /// 
+        /// 2.1.2 基于 Npm Scripts 定义任务
+        ///     通过 package.json 中的 scriptsMeta 配置定义任务：
+        ///     
+        ///     {
+        ///       &quot;name&quot;: &quot;my-package&quot;,
+        ///       &quot;version&quot;: &quot;1.0.0&quot;,
+        ///       &quot;scripts&quot;: {
+        ///         &quot;build&quot;: &quot;echo 执行构建&quot;,
+        ///         &quot;test&quot;: &quot;echo 执行测试&quot;
+        ///       },
+        ///       &quot;scriptsMeta&quot;: {
+        ///         &quot;build&quot;: {
+        ///           &quot;name&quot;: &quot;构建任务&quot;,
+        ///           &quot;group&quot;: &quot;构建&quot;,
+        ///           &quot;tooltip&quot;: &quot;执行项目构建&quot;,
+        ///           &quot;priority&quot;: 1,
+        ///           &quot;singleton&quot;: true,
+        ///           &quot;runasync&quot;: true,
+        ///           &quot;params&quot;: [
+        ///             {
+        ///               &quot;name&quot;: &quot;env&quot;,
+        ///               &quot;tooltip&quot;: &quot;构建环境&quot;,
+        ///               &quot;default&quot;: &quot;dev&quot;,
+        ///               &quot;persist&quot;: true,
+        ///               &quot;platform&quot;: &quot;Unknown&quot;
+        ///             }
+        ///           ]
+        ///         },
+        ///         &quot;test&quot;: {
+        ///           &quot;name&quot;: &quot;测试任务&quot;,
+        ///           &quot;group&quot;: &quot;测试&quot;,
+        ///           &quot;priority&quot;: 2
+        ///         }
+        ///       }
+        ///     }
+        ///     
+        ///     scriptsMeta 中的每个键对应 scripts 中的脚本名称，值为任务配置对象：
+        ///     
+        ///     name: 字符串，任务显示名称，默认为脚本名称
+        ///     group: 字符串，任务分组，默认为 &quot;Npm Scripts&quot;
+        ///     tooltip: 字符串，任务提示信息，默认为空
+        ///     priority: 整数，任务优先级，默认为 0
+        ///     singleton: 布尔值，是否为单例任务，默认为 false
+        ///     runasync: 布尔值，是否异步执行，默认为 true
+        ///     platform: 字符串，任务适用平台，默认为 &quot;Unknown&quot;(所有平台)
+        ///     params: 数组，任务参数列表，默认为 []
+        ///     
+        ///     params 数组中的每个对象定义一个任务参数：
+        ///     
+        ///     name: 字符串，参数名称，必填
+        ///     tooltip: 字符串，参数提示信息，默认为空
+        ///     default: 字符串，参数默认值，默认为空
+        ///     persist: 布尔值，是否持久化保存，默认为 false
+        ///     platform: 字符串，参数适用平台，默认为 &quot;Unknown&quot;(所有平台)
         /// 
         /// 2.2 生命周期
         ///     public override void Preprocess(XEditor.Tasks.Report report)

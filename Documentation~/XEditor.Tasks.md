@@ -55,9 +55,11 @@ if (report.Result == XEditor.Tasks.Result.Succeeded) {
 
 ### 2. 自定义任务
 
-#### 2.1 实现任务
+#### 2.1 定义任务
 
-通过继承 Worker 基类或实现 IWorker 接口创建自定义任务：
+##### 2.1.1 基于 C# Attribute 定义任务
+
+通过继承 Worker 基类或实现 IWorker 接口定义任务：
 
 ```csharp
 [XEditor.Tasks.Worker("我的任务", "任务分组", "任务说明")]
@@ -79,6 +81,68 @@ public class MyTask : XEditor.Tasks.Worker
     }
 }
 ```
+
+##### 2.1.2 基于 Npm Scripts 定义任务
+
+通过 package.json 中的 scriptsMeta 配置定义任务：
+
+```json
+{
+  "name": "my-package",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo 执行构建",
+    "test": "echo 执行测试"
+  },
+  "scriptsMeta": {
+    "build": {
+      "name": "构建任务",
+      "group": "构建",
+      "tooltip": "执行项目构建",
+      "priority": 1,
+      "singleton": true,
+      "runasync": true,
+      "params": [
+        {
+          "name": "env",
+          "tooltip": "构建环境",
+          "default": "dev",
+          "persist": true,
+          "platform": "Unknown"
+        }
+      ]
+    },
+    "test": {
+      "name": "测试任务",
+      "group": "测试",
+      "priority": 2
+    }
+  }
+}
+```
+
+scriptsMeta 中的每个键对应 scripts 中的脚本名称，值为任务配置对象：
+
+| 配置项 | 类型 | 说明 | 默认值 |
+|-------|------|------|-------|
+| `name` | 字符串 | 任务显示名称 | 脚本名称 |
+| `group` | 字符串 | 任务分组 | "Npm Scripts" |
+| `tooltip` | 字符串 | 任务提示信息 | 空 |
+| `priority` | 整数 | 任务优先级 | 0 |
+| `singleton` | 布尔值 | 是否为单例任务 | false |
+| `runasync` | 布尔值 | 是否异步执行 | true |
+| `platform` | 字符串 | 任务适用平台 | "Unknown"(所有平台) |
+| `params` | 数组 | 任务参数列表 | [] |
+
+params 数组中的每个对象定义一个任务参数：
+
+| 配置项 | 类型 | 说明 | 默认值 |
+|-------|------|------|-------|
+| `name` | 字符串 | 参数名称 | 必填 |
+| `tooltip` | 字符串 | 参数提示信息 | 空 |
+| `default` | 字符串 | 参数默认值 | 空 |
+| `persist` | 布尔值 | 是否持久化保存 | false |
+| `platform` | 字符串 | 参数适用平台 | "Unknown"(所有平台) |
 
 #### 2.2 生命周期
 
