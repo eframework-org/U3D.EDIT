@@ -8,6 +8,10 @@ using NUnit.Framework;
 using UnityEditor;
 using EFramework.Editor;
 using EFramework.Utility;
+#if !UNITY_6000_0_OR_NEWER
+using System.Reflection;
+using System.Linq;
+#endif
 
 public class TestXEditorTitle
 {
