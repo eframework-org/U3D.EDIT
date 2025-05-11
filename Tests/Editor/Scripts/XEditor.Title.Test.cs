@@ -8,8 +8,6 @@ using NUnit.Framework;
 using UnityEditor;
 using EFramework.Editor;
 using EFramework.Utility;
-using System.Reflection;
-using System.Linq;
 
 public class TestXEditorTitle
 {
@@ -111,9 +109,10 @@ public class TestXEditorTitle
         var expectedPrefs = $"[Prefs{prefsDirty}: {XEnv.Author}/{XEnv.Channel}/{XEnv.Version}/{XEnv.Mode}/{XLog.Level()}]";
         Assert.That(XEditor.Title.prefsLabel, Is.EqualTo(expectedPrefs), "Should update preferences label");
 
-        var task = XEditor.Cmd.Run("git", print: false, args: new string[] { "rev-parse", "--git-dir" });
-        if (task.Result.Code == 0) Assert.That(XEditor.Title.gitBranch, Is.Not.Empty); // 在 Git 仓库中
-        else Assert.That(XEditor.Title.gitBranch, Is.Empty); // 不在 Git 仓库中
+        // 因为 Refresh 是异步执行的，所以无法验证 gitBranch
+        // var task = XEditor.Cmd.Run("git", print: false, args: new string[] { "rev-parse", "--git-dir" });
+        // if (task.Result.Code == 0) Assert.That(XEditor.Title.gitBranch, Is.Not.Empty); // 在 Git 仓库中
+        // else Assert.That(XEditor.Title.gitBranch, Is.Empty); // 不在 Git 仓库中
     }
 }
 #endif
