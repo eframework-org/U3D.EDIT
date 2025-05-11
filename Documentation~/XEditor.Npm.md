@@ -2,6 +2,7 @@
 
 [![Version](https://img.shields.io/npm/v/org.eframework.u3d.edit)](https://www.npmjs.com/package/org.eframework.u3d.edit)
 [![Downloads](https://img.shields.io/npm/dm/org.eframework.u3d.edit)](https://www.npmjs.com/package/org.eframework.u3d.edit)  
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-Explore-blue)](https://deepwiki.com/eframework-org/U3D.EDIT)
 
 XEditor.Npm 提供了在 Unity 编辑器中调用和执行 NPM 脚本的工具，支持异步执行、参数传递和错误处理。
 

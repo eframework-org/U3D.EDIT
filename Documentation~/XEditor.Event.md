@@ -2,6 +2,7 @@
 
 [![Version](https://img.shields.io/npm/v/org.eframework.u3d.edit)](https://www.npmjs.com/package/org.eframework.u3d.edit)
 [![Downloads](https://img.shields.io/npm/dm/org.eframework.u3d.edit)](https://www.npmjs.com/package/org.eframework.u3d.edit)  
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-Explore-blue)](https://deepwiki.com/eframework-org/U3D.EDIT)
 
 XEditor.Event 提供了基于接口的编辑器事件系统，支持自定义事件回调和通知，内置了一些常用的事件，如编辑器初始化、更新和退出等。
 

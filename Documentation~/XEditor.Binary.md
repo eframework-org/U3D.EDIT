@@ -2,6 +2,7 @@
 
 [![Version](https://img.shields.io/npm/v/org.eframework.u3d.edit)](https://www.npmjs.com/package/org.eframework.u3d.edit)
 [![Downloads](https://img.shields.io/npm/dm/org.eframework.u3d.edit)](https://www.npmjs.com/package/org.eframework.u3d.edit)
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-Explore-blue)](https://deepwiki.com/eframework-org/U3D.EDIT)
 
 XEditor.Binary 提供了一套完整的构建流程管理系统，简化了多平台项目的构建配置，支持自动化和构建后处理。
 
