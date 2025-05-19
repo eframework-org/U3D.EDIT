@@ -29,7 +29,7 @@ namespace EFramework.Editor
         /// 1. 基础用法
         /// 
         /// 1.1 打开视图
-        ///     通过菜单项 `Tools/EFramework/Task Runner` 或快捷键 `Ctrl+P` 打开任务管理器。
+        ///     通过菜单项 `Tools/EFramework/Task Runner` 打开任务管理面板。
         ///     
         ///     // 也可以通过代码打开
         ///     XEditor.Tasks.Panel.Open();

@@ -1,7 +1,12 @@
 # 更新记录
 
+## [0.0.5] - 
+### 变更
+- 移除 Preferences 和 Task Runner 面板的快捷键，由用户自行设定
+- 移除 XEditor.Utility.ShowInExplorer 的快捷键绑定，由内置的 Assets/Show in Explorer 替代之
+
 ## [0.0.4] - 2025-05-11
-## 变更
+### 变更
 - 优化 Preferences 和 Task Runner 的菜单栏路径，符合 Unity 插件规范
 - 更新依赖库版本
 

@@ -28,4 +28,4 @@ EFramework Editor for Unity 是一个编辑器扩展工具库，提供了任务�
 
 - [更新记录](CHANGELOG.md)
 - [贡献指南](CONTRIBUTING.md)
-- [许可证](LICENSE.md) 
+- [许可证](LICENSE.md)

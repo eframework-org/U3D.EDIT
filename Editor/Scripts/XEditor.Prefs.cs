@@ -162,9 +162,8 @@ namespace EFramework.Editor
 
             /// <summary>
             /// 菜单路径，定义了在 Unity 主菜单中的位置。
-            /// 快捷键为 #r（Ctrl+R）
             /// </summary>
-            internal const string MenuPath = "Tools/EFramework/Preferences #r";
+            internal const string MenuPath = "Tools/EFramework/Preferences";
 
             /// <summary>
             /// 项目设置菜单路径，定义了在 Project Settings 窗口中的位置。

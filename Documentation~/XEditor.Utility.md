@@ -99,9 +99,6 @@ string path = XEditor.Utility.GetSelectedPath();
 
 ```csharp
 XEditor.Utility.ShowInExplorer("Assets/MyFolder");
-
-// 也可以显示项目根目录
-XEditor.Utility.ShowInExplorer();
 ```
 
 ## 常见问题

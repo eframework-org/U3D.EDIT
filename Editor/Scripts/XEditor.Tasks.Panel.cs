@@ -13,35 +13,8 @@ using EFramework.Utility;
 namespace EFramework.Editor
 {
     /// <summary>
-    /// 任务系统的可视化管理面板。
+    /// 任务系统的可视化管理面板，对任务进行分组管理，提供可视化的参数配置等功能。
     /// </summary>
-    /// <remarks>
-    /// <code>
-    /// 功能特性
-    /// - 任务分组管理：支持按组展示和操作任务
-    /// - 参数配置界面：提供任务参数的可视化配置
-    /// - 执行控制功能：支持单任务和批量任务执行
-    /// - 状态持久化：支持配置的保存和加载
-    /// 
-    /// 使用手册
-    /// 1. 界面操作
-    /// - 通过菜单 Tools/EFramework/Task Runner 或快捷键 Ctrl+P 打开面板
-    /// - 使用折叠按钮控制任务组和任务的显示
-    /// - 通过复选框选择要执行的任务
-    /// - 点击执行按钮运行选中的任务
-    /// 
-    /// 2. 参数配置
-    /// - 展开任务可查看和编辑参数
-    /// - 支持参数值的持久化存储
-    /// - 提供自定义 GUI 扩展支持
-    /// 
-    /// 3. 执行流程
-    /// - 支持单任务和批量任务执行
-    /// - 自动处理任务间的依赖关系
-    /// - 提供同步和异步执行模式
-    /// </code>
-    /// 更多信息请参考模块文档。
-    /// </remarks>
     [Serializable]
     internal class TasksPanel : EditorWindow
     {
@@ -553,20 +526,6 @@ namespace EFramework.Editor
             /// <summary>
             /// 任务面板管理器，提供面板的创建、显示和生命周期管理。
             /// </summary>
-            /// <remarks>
-            /// <code>
-            /// 功能特性
-            /// - 面板生命周期管理
-            /// - 界面回调接口支持
-            /// - 状态重置功能
-            /// 
-            /// 接口说明
-            /// 1. IOnEnable：面板启用时的回调
-            /// 2. IOnGUI：面板绘制时的回调
-            /// 3. IOnDisable：面板禁用时的回调
-            /// 4. IOnDestroy：面板销毁时的回调
-            /// </code>
-            /// </remarks>
             public class Panel : Event.Internal.OnEditorLoad
             {
                 /// <summary>
@@ -603,9 +562,8 @@ namespace EFramework.Editor
 
                 /// <summary>
                 /// 菜单路径，定义了在 Unity 主菜单中的位置。
-                /// 快捷键为 #p（Ctrl+P）。
                 /// </summary>
-                internal const string MenuPath = "Tools/EFramework/Task Runner #p";
+                internal const string MenuPath = "Tools/EFramework/Task Runner";
 
                 /// <summary>
                 /// 任务窗口实例。

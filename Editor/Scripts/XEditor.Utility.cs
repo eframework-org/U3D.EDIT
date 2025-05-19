@@ -98,8 +98,6 @@ namespace EFramework.Editor
         ///     
         ///     XEditor.Utility.ShowInExplorer(&quot;Assets/MyFolder&quot;);
         ///     
-        ///     // 也可以显示项目根目录
-        ///     XEditor.Utility.ShowInExplorer();
         /// </code>
         /// 更多信息请参考模块文档。
         /// </remarks>
@@ -487,12 +485,6 @@ namespace EFramework.Editor
                     EditorUtility.OpenWithDefaultApp(path);
                 }
             }
-
-            /// <summary>
-            /// 在系统文件浏览器中显示项目根目录（菜单项）。
-            /// </summary>
-            [MenuItem("Assets/Project Folder #s")]
-            public static void ShowInExplorer() { ShowInExplorer(XEnv.ProjectPath); }
 
             /// <summary>
             /// 查找指定程序集所属的 Unity 包信息。
