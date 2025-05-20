@@ -398,6 +398,169 @@ public class TestXEditorTasksPanel
         }
     }
 
+    /// <summary>
+    /// 测试获取任务组状态图标。
+    /// </summary>
+    /// <remarks>
+    /// 测试内容：
+    /// 1. 组内有未知状态的任务
+    ///    - 验证图标获取正确
+    ///    - 应当获取到未知图标
+    /// 
+    /// 2. 组内有失败的任务
+    ///    - 验证图标获取正确
+    ///    - 应当获取到失败图标
+    /// 
+    /// 3. 组内所有任务都成功
+    ///    - 验证图标获取正确
+    ///    - 应当获取到成功图标
+    /// </remarks>
+    [TestCase(XEditor.Tasks.Result.Succeeded, XEditor.Tasks.Result.Unknown, XEditor.Tasks.Result.Succeeded, TasksPanel.UnknowIcon)]
+    [TestCase(XEditor.Tasks.Result.Succeeded, XEditor.Tasks.Result.Failed, XEditor.Tasks.Result.Succeeded, TasksPanel.FailIcon)]
+    [TestCase(XEditor.Tasks.Result.Succeeded, XEditor.Tasks.Result.Succeeded, XEditor.Tasks.Result.Succeeded, TasksPanel.SuccessIcon)]
+    public void GetGroupStatusIcon(XEditor.Tasks.Result result1, XEditor.Tasks.Result result2, XEditor.Tasks.Result result3, string expected)
+    {
+        var panel = ScriptableObject.CreateInstance<TasksPanel>();
+
+        // 准备测试任务元数据
+        var task1Meta = new XEditor.Tasks.WorkerAttribute("Task1", "TestGroup", "Test Task 1");
+        var task2Meta = new XEditor.Tasks.WorkerAttribute("Task2", "TestGroup", "Test Task 2");
+        var task3Meta = new XEditor.Tasks.WorkerAttribute("Task3", "TestGroup", "Test Task 3");
+        var group = new List<XEditor.Tasks.WorkerAttribute> { task1Meta, task2Meta, task3Meta };
+
+        try
+        {
+            panel.taskStatusDict[task1Meta.Name] = (int)result1;
+            panel.taskStatusDict[task2Meta.Name] = (int)result2;
+            panel.taskStatusDict[task3Meta.Name] = (int)result3;
+            var icon = panel.GetGroupStatusIcon(group);
+            Assert.That(icon, Is.EqualTo(XEditor.Icons.GetIcon(expected)?.image), "状态图标应当正确");
+        }
+        finally
+        {
+            // 清理测试环境
+            Object.DestroyImmediate(panel);
+        }
+    }
+
+    /// <summary>
+    /// 测试任务状态的保存和加载功能。
+    /// </summary>
+    /// <remarks>
+    /// 测试内容：
+    /// 1. 任务状态保存
+    ///    - 验证状态正确写入文件
+    ///    - 验证数据格式完整性
+    ///    - 验证文件创建成功
+    /// 
+    /// 2. 任务状态加载
+    ///    - 验证状态正确恢复
+    ///    - 验证数据一致性
+    ///    - 验证所有状态类型的处理
+    /// 
+    /// 3. 异常处理
+    ///    - 验证文件不存在时的处理
+    /// </remarks>
+    [Test]
+    public void LoadAndSaveTaskStatus()
+    {
+        var panel = ScriptableObject.CreateInstance<TasksPanel>();
+        // 备份缓存文件
+        var bakPath = TasksPanel.CachePath + ".bak";
+        if (XFile.HasFile(TasksPanel.CachePath))
+        {
+            XFile.CopyFile(TasksPanel.CachePath, bakPath);
+            XFile.DeleteFile(TasksPanel.CachePath);
+        }
+
+        try
+        {
+            // 场景1：保存任务状态
+            // 验证点：
+            // - 状态正确保存到文件
+            // - 数据格式正确
+            panel.taskStatusDict["Task1"] = (int)XEditor.Tasks.Result.Succeeded;
+            panel.taskStatusDict["Task2"] = (int)XEditor.Tasks.Result.Failed;
+            panel.taskStatusDict["Task3"] = (int)XEditor.Tasks.Result.Unknown;
+
+            panel.SaveTaskStatusCache();
+
+            // 验证文件存在
+            var cachePath = XFile.PathJoin(XEnv.ProjectPath, TasksPanel.CachePath);
+            Assert.That(XFile.HasFile(cachePath), Is.True, "缓存文件应当创建");
+
+            // 场景2：加载任务状态
+            // 验证点：
+            // - 正确读取缓存文件
+            // - 状态正确恢复
+            panel.taskStatusDict.Clear();
+            panel.LoadTaskStatusCache();
+
+            // 验证状态恢复
+            Assert.That(panel.taskStatusDict["Task1"], Is.EqualTo((int)XEditor.Tasks.Result.Succeeded), "Task1状态应当为Succeeded");
+            Assert.That(panel.taskStatusDict["Task2"], Is.EqualTo((int)XEditor.Tasks.Result.Failed), "Task2状态应当为Failed");
+            Assert.That(panel.taskStatusDict["Task3"], Is.EqualTo((int)XEditor.Tasks.Result.Unknown), "Task3状态应当为Unknown");
+
+            // 场景3：加载不存在的缓存文件
+            // 验证点：
+            // - 优雅处理文件不存在的情况
+            XFile.DeleteFile(cachePath);
+            var emptyPanel = ScriptableObject.CreateInstance<TasksPanel>();
+            emptyPanel.LoadTaskStatusCache();
+            Assert.That(emptyPanel.taskStatusDict, Is.Empty, "不存在缓存文件时应返回空状态");
+        }
+        finally
+        {
+            // 清理测试环境
+            var cachePath = XFile.PathJoin(XEnv.ProjectPath, TasksPanel.CachePath);
+            if (XFile.HasFile(cachePath))
+            {
+                XFile.DeleteFile(cachePath);
+            }
+            // 还原备份文件
+            if (XFile.HasFile(bakPath))
+            {
+                XFile.CopyFile(bakPath, TasksPanel.CachePath);
+                XFile.DeleteFile(bakPath);
+            }
+
+            Object.DestroyImmediate(panel);
+        }
+    }
+
+    /// <summary>
+    /// 测试获取任务状态图标。
+    /// </summary>
+    /// <remarks>
+    /// 测试内容：
+    /// 1. 成功状态图标
+    ///    - 验证成功状态返回正确图标
+    ///    - 验证图标资源加载正确
+    /// 
+    /// 2. 失败状态图标
+    ///    - 验证失败状态返回正确图标
+    ///    - 验证图标资源加载正确
+    /// 
+    /// 3. 其他状态图标
+    ///    - 验证未知状态返回正确图标
+    ///    - 验证取消状态返回正确图标
+    ///    - 验证默认状态处理正确
+    /// </remarks>
+    [TestCase("Task1", XEditor.Tasks.Result.Succeeded, "TestPassed")]
+    [TestCase("Task2", XEditor.Tasks.Result.Failed, "TestFailed")]
+    [TestCase("Task3", XEditor.Tasks.Result.Unknown, "TestNormal")]
+    [TestCase("Task4", XEditor.Tasks.Result.Cancelled, "TestNormal")]
+    public void GetTaskStatusIcon(string metaName, XEditor.Tasks.Result resultType, string result)
+    {
+        var panel = ScriptableObject.CreateInstance<TasksPanel>();
+
+        panel.taskStatusDict[metaName] = (int)resultType;
+        var icon = panel.GetTaskStatusIcon(metaName);
+        Assert.That(icon, Is.EqualTo(XEditor.Icons.GetIcon(result)?.image), "状态图标应当正确");
+
+        Object.DestroyImmediate(panel);
+    }
+
     #endregion
 }
 #endif

@@ -75,7 +75,7 @@ namespace EFramework.Editor
         /// </remarks>
         internal readonly List<XEditor.Tasks.WorkerAttribute> taskOrders = new();
 
-        internal readonly Dictionary<string, int> taskReports = new();
+        internal readonly Dictionary<string, int> taskStatusDict = new();
 
         /// <summary>
         /// 是否展开所有任务组和任务。
@@ -92,17 +92,50 @@ namespace EFramework.Editor
         /// </summary>
         internal Vector2 scroll = Vector2.zero;
 
-        // 日志缓存
-        private readonly StringBuilder logBuilder = new StringBuilder();
-        private Vector2 logScroll = Vector2.zero;
-        private const int MaxLogLength = 15000;
-        private float logAreaHeight = 150f; // 日志区域初始高度
-        private bool isResizingLogs = false;
-        private const float minLogAreaHeight = 50f;
+        /// <summary>
+        /// 任务执行日志。
+        /// </summary>
+        internal readonly StringBuilder logBuilder = new StringBuilder();
 
-        internal const string FAIL = "TestFailed";
-        internal const string SUCCESS = "TestPassed";
-        internal const string UNKNOW = "TestNormal";
+        /// <summary>
+        /// 任务执行日志的滚动位置。
+        /// </summary>
+        internal Vector2 logScroll = Vector2.zero;
+
+        /// <summary>
+        /// 最大日志字符长度。
+        /// </summary>
+        internal const int MaxLogLength = 15000;
+
+        /// <summary>
+        /// 日志区域初始高度
+        /// </summary>
+        internal float logAreaHeight = 150f;
+
+        /// <summary>
+        /// 是否正在调整日志区域高度
+        /// </summary>
+        internal bool isResizingLogs = false;
+
+        /// <summary>
+        /// 任务失败图标
+        /// </summary>
+        internal const string FailIcon = "TestFailed";
+
+        /// <summary>
+        /// 任务成功图标
+        /// </summary>
+        internal const string SuccessIcon = "TestPassed";
+
+        /// <summary>
+        /// 任务状态未知图标
+        /// </summary>
+        internal const string UnknowIcon = "TestNormal";
+
+        /// <summary>
+        /// 任务状态缓存文件路径
+        /// </summary>
+        internal const string CachePath = "Library/TaskStatusCache.json";
 
         /// <summary>
         /// 窗口启用时的回调，初始化面板实例并重置状态。
@@ -560,10 +593,10 @@ namespace EFramework.Editor
                     AppendLog(FormatLogWithHyperlinks(tempLogs.ToString()));
                     AppendLog($"---MESSAGE TRUNCATED AT {MaxLogLength} CHARACTERS---\n");
                 }
-                taskReports[meta.Name] = (int)report.Result;
+                taskStatusDict[meta.Name] = (int)report.Result;
             }
             Application.logMessageReceived -= LogHandler;
-            SaveTaskReportsCache();
+            SaveTaskStatusCache();
         }
 
         /// <summary>
@@ -577,7 +610,7 @@ namespace EFramework.Editor
             var hasFail = false;
             foreach (var meta in group)
             {
-                if (!taskReports.TryGetValue(meta.Name, out var result) || result == 0) // 0为未知
+                if (!taskStatusDict.TryGetValue(meta.Name, out var result) || result == 0) // 0为未知
                 {
                     hasUnknown = true;
                     break;
@@ -587,9 +620,9 @@ namespace EFramework.Editor
                     hasFail = true;
                 }
             }
-            if (hasUnknown) return XEditor.Icons.GetIcon(UNKNOW)?.image;
-            if (hasFail) return XEditor.Icons.GetIcon(FAIL)?.image;
-            return XEditor.Icons.GetIcon(SUCCESS)?.image;
+            if (hasUnknown) return XEditor.Icons.GetIcon(UnknowIcon)?.image;
+            if (hasFail) return XEditor.Icons.GetIcon(FailIcon)?.image;
+            return XEditor.Icons.GetIcon(SuccessIcon)?.image;
         }
 
         /// <summary>
@@ -600,41 +633,40 @@ namespace EFramework.Editor
         internal Texture GetTaskStatusIcon(string metaName)
         {
             // 没有数据时，加载缓存
-            if (!taskReports.ContainsKey(metaName)) LoadTaskReportsCache();
-            taskReports.TryGetValue(metaName, out var result);
-            Texture icon = XEditor.Icons.GetIcon(UNKNOW)?.image;
+            if (!taskStatusDict.ContainsKey(metaName)) LoadTaskStatusCache();
+            taskStatusDict.TryGetValue(metaName, out var result);
+            Texture icon = XEditor.Icons.GetIcon(UnknowIcon)?.image;
             if (result == (int)XEditor.Tasks.Result.Succeeded)
-                icon = XEditor.Icons.GetIcon(SUCCESS)?.image;
+                icon = XEditor.Icons.GetIcon(SuccessIcon)?.image;
             else if (result == (int)XEditor.Tasks.Result.Failed)
-                icon = XEditor.Icons.GetIcon(FAIL)?.image;
+                icon = XEditor.Icons.GetIcon(FailIcon)?.image;
             return icon;
         }
 
         /// <summary>
         /// 保存任务状态缓存
         /// </summary>
-        internal void SaveTaskReportsCache()
+        internal void SaveTaskStatusCache()
         {
-            var cache = new XEditor.Tasks.TaskStatusCache(taskReports);
+            var cache = new XEditor.Tasks.TaskStatusCache(taskStatusDict);
             var json = JsonUtility.ToJson(cache);
-            XFile.SaveText(XFile.PathJoin(XEnv.ProjectPath, "Library/TaskReportsCache.json"), json);
+            XFile.SaveText(XFile.PathJoin(XEnv.ProjectPath, CachePath), json);
         }
 
         /// <summary>
         /// 加载任务状态缓存
         /// </summary>
-        internal void LoadTaskReportsCache()
+        internal void LoadTaskStatusCache()
         {
-            var path = "Library/TaskReportsCache.json";
-            if (!File.Exists(path)) return;
-            var json = File.ReadAllText(path);
+            if (!File.Exists(CachePath)) return;
+            var json = File.ReadAllText(CachePath);
             var cache = JsonUtility.FromJson<XEditor.Tasks.TaskStatusCache>(json);
             if (cache != null)
             {
                 var dict = cache.ToDictionary();
                 foreach (var kv in dict)
                 {
-                    taskReports[kv.Key] = kv.Value;
+                    taskStatusDict[kv.Key] = kv.Value;
                 }
             }
         }
@@ -658,7 +690,7 @@ namespace EFramework.Editor
                 if (Event.current.type == EventType.MouseDrag)
                 {
                     logAreaHeight -= Event.current.delta.y;
-                    logAreaHeight = Mathf.Clamp(logAreaHeight, minLogAreaHeight, position.height - 100);
+                    logAreaHeight = Mathf.Clamp(logAreaHeight, 50, position.height - 100);
                     Event.current.Use();
                 }
                 if (Event.current.type == EventType.MouseUp)
