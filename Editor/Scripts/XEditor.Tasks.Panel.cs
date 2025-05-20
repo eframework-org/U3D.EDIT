@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using EFramework.Utility;
+using System.Text;
 
 namespace EFramework.Editor
 {
@@ -90,6 +91,14 @@ namespace EFramework.Editor
         /// 滚动视图位置。
         /// </summary>
         internal Vector2 scroll = Vector2.zero;
+
+        // 日志缓存
+        private readonly StringBuilder logBuilder = new StringBuilder();
+        private Vector2 logScroll = Vector2.zero;
+        private const int MaxLogLength = 100000;
+        private float logAreaHeight = 150f; // 日志区域初始高度
+        private bool isResizingLogs = false;
+        private const float minLogAreaHeight = 50f;
 
         internal const string FAIL = "TestFailed";
         internal const string SUCCESS = "TestPassed";
@@ -484,6 +493,20 @@ namespace EFramework.Editor
                 }
             }
             GUILayout.EndScrollView();
+
+            // 绘制日志分割条
+            DrawLogSplitter();
+
+            // 日志显示区域
+            logScroll = EditorGUILayout.BeginScrollView(logScroll, GUILayout.Height(logAreaHeight));
+            var richTextStyle = new GUIStyle(EditorStyles.label) { richText = true, wordWrap = true };
+            EditorGUILayout.SelectableLabel(
+                logBuilder.ToString(),
+                richTextStyle,
+                GUILayout.ExpandWidth(true),
+                GUILayout.Height(richTextStyle.CalcHeight(new GUIContent(logBuilder.ToString()), position.width - 20))
+            );
+            EditorGUILayout.EndScrollView();
         }
 
         /// <summary>
@@ -492,6 +515,15 @@ namespace EFramework.Editor
         /// <param name="workers">要执行的任务列表</param>
         internal void Run(List<XEditor.Tasks.IWorker> workers)
         {
+            logBuilder.Clear();
+            var tempLogs = new StringBuilder();
+            void LogHandler(string condition, string stackTrace, LogType type)
+            {
+                tempLogs.AppendLine(condition);
+                if (!string.IsNullOrEmpty(stackTrace))
+                    tempLogs.AppendLine(stackTrace);
+            }
+            Application.logMessageReceived += LogHandler;
             if (workers == null || workers.Count == 0) return;
 
             // 检查是否存在同步任务
@@ -521,9 +553,16 @@ namespace EFramework.Editor
                 worker.Runasync = meta.Runasync;
                 // 因任务间的依赖关系未知，多任务并发时，且有主线程任务的情况下，使用串行模式执行
                 if (workers.Count > 1 && hasSync && worker.Runasync) worker.Runasync = false;
+                AppendLog(worker.ID + "\n--------------------------------------------------------------------------");
                 var report = XEditor.Tasks.Execute(worker: worker, arguments: arguments);
+                if (tempLogs.Length > 0)
+                {
+                    AppendLog(FormatLogWithHyperlinks(tempLogs.ToString()));
+                    AppendLog($"---MESSAGE TRUNCATED AT {MaxLogLength} CHARACTERS---\n");
+                }
                 taskReports[meta.Name] = (int)report.Result;
             }
+            Application.logMessageReceived -= LogHandler;
             SaveTaskReportsCache();
         }
 
@@ -598,6 +637,145 @@ namespace EFramework.Editor
                     taskReports[kv.Key] = kv.Value;
                 }
             }
+        }
+
+        /// <summary>
+        /// 绘制日志分割条
+        /// </summary>
+        internal void DrawLogSplitter()
+        {
+            // 分割条
+            Rect splitterRect = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(1), GUILayout.ExpandWidth(true));
+            EditorGUI.DrawRect(splitterRect, Color.black);
+            EditorGUIUtility.AddCursorRect(splitterRect, MouseCursor.ResizeVertical);
+
+            if (Event.current.type == EventType.MouseDown && splitterRect.Contains(Event.current.mousePosition))
+            {
+                isResizingLogs = true;
+            }
+            if (isResizingLogs)
+            {
+                if (Event.current.type == EventType.MouseDrag)
+                {
+                    logAreaHeight -= Event.current.delta.y;
+                    logAreaHeight = Mathf.Clamp(logAreaHeight, minLogAreaHeight, position.height - 100);
+                    Event.current.Use();
+                }
+                if (Event.current.type == EventType.MouseUp)
+                {
+                    isResizingLogs = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 日志追加
+        /// </summary>
+        /// <param name="msg"></param>
+        private void AppendLog(string msg)
+        {
+            // 保留前两行，从第三行开始计算长度
+            var logStr = logBuilder.ToString();
+            var lines = logStr.Split('\n');
+            if (lines.Length > 2)
+            {
+                // 计算从第三行开始的总长度
+                int headLen = lines[0].Length + lines[1].Length + 2; // 两个换行
+                int tailLen = 0;
+                for (int i = 2; i < lines.Length; i++)
+                {
+                    tailLen += lines[i].Length + 1;
+                }
+                if (tailLen > MaxLogLength)
+                {
+                    // 截断第三行及以后
+                    int startIdx = headLen;
+                    int cutIdx = startIdx + tailLen - MaxLogLength;
+                    logBuilder.Remove(startIdx, cutIdx - startIdx);
+                }
+            }
+            logBuilder.AppendLine(msg);
+            Repaint();
+        }
+
+        /// <summary>
+        /// 将日志文本中的文件路径转换为可点击的超链接（用于跳转到源码）。
+        /// 支持 "] in 路径:行号" 和 "(at 路径:行号)" 两种格式。
+        /// </summary>
+        /// <param name="logText">原始日志文本</param>
+        /// <returns>带有超链接的富文本日志</returns>
+        private static string FormatLogWithHyperlinks(string logText)
+        {
+            StringBuilder textWithHyperlinks = new StringBuilder();
+            var lines = logText.Split(new string[] { "\n" }, StringSplitOptions.None);
+
+            for (int i = 0; i < lines.Length; ++i)
+            {
+                string line = lines[i];
+
+                // 1. 支持 "] in 路径:行号" 格式
+                string textBeforeFilePath = "] in ";
+                int filePathIndex = line.IndexOf(textBeforeFilePath, StringComparison.Ordinal);
+                if (filePathIndex > 0)
+                {
+                    filePathIndex += textBeforeFilePath.Length;
+                    if (line[filePathIndex] != '<')
+                    {
+                        string filePathPart = line.Substring(filePathIndex);
+                        int lineIndex = filePathPart.LastIndexOf(":", StringComparison.Ordinal);
+                        if (lineIndex > 0)
+                        {
+                            string lineString = filePathPart.Substring(lineIndex + 1);
+                            string filePath = filePathPart.Substring(0, lineIndex);
+#if UNITY_2021_3_OR_NEWER
+                            var displayedPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), filePath);
+#else
+                            var displayedPath = filePath;
+#endif
+                            textWithHyperlinks.Append($"{line.Substring(0, filePathIndex)}<color=#40a0ff><a href=\"{filePath}\" line=\"{lineString}\">{displayedPath}:{lineString}</a></color>\n");
+                            continue;
+                        }
+                    }
+                }
+                // 2. 支持 "(at 路径:行号)" 格式
+                string atPattern = "(at ";
+                int atIndex = line.IndexOf(atPattern, StringComparison.Ordinal);
+                if (atIndex >= 0)
+                {
+                    int pathStart = atIndex + atPattern.Length;
+                    int pathEnd = line.IndexOf(")", pathStart, StringComparison.Ordinal);
+                    if (pathEnd > pathStart)
+                    {
+                        string fileAndLine = line.Substring(pathStart, pathEnd - pathStart);
+                        int colonIdx = fileAndLine.LastIndexOf(":", StringComparison.Ordinal);
+                        if (colonIdx > 0)
+                        {
+                            string filePath = fileAndLine.Substring(0, colonIdx);
+                            string lineNum = fileAndLine.Substring(colonIdx + 1);
+#if UNITY_2021_3_OR_NEWER
+                            var displayedPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), filePath);
+#else
+                            var displayedPath = filePath;
+#endif
+                            // 拼接前半部分
+                            textWithHyperlinks.Append(line.Substring(0, pathStart));
+                            // 超链接部分
+                            textWithHyperlinks.Append($"<color=#40a0ff><a href=\"{filePath}\" line=\"{lineNum}\">{displayedPath}:{lineNum}</a></color>");
+                            // 拼接后半部分
+                            textWithHyperlinks.Append(line.Substring(pathEnd) + "\n");
+                            continue;
+                        }
+                    }
+                }
+
+                // 默认情况：直接写入该行
+                textWithHyperlinks.Append(line + "\n");
+            }
+            // 移除最后一个 \n
+            if (textWithHyperlinks.Length > 0) // 如果不为空，最后一定有\n
+                textWithHyperlinks.Remove(textWithHyperlinks.Length - 1, 1);
+
+            return textWithHyperlinks.ToString();
         }
     }
 
