@@ -722,6 +722,34 @@ namespace EFramework.Editor
                     Test = test;
                 }
             }
+
+            /// <summary>
+            /// 任务状态缓存，用于缓存任务状态信息到本地文件。
+            /// </summary>
+            public class TaskStatusCache
+            {
+                public List<string> keys = new List<string>();
+                public List<int> values = new List<int>();
+
+                public TaskStatusCache() { }
+                public TaskStatusCache(Dictionary<string, int> dict)
+                {
+                    foreach (var kv in dict)
+                    {
+                        keys.Add(kv.Key);
+                        values.Add(kv.Value);
+                    }
+                }
+                public Dictionary<string, int> ToDictionary()
+                {
+                    var dict = new Dictionary<string, int>();
+                    for (int i = 0; i < keys.Count; i++)
+                    {
+                        dict[keys[i]] = values[i];
+                    }
+                    return dict;
+                }
+            }
         }
     }
 }

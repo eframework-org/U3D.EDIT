@@ -74,6 +74,8 @@ namespace EFramework.Editor
         /// </remarks>
         internal readonly List<XEditor.Tasks.WorkerAttribute> taskOrders = new();
 
+        internal readonly Dictionary<string, int> taskReports = new();
+
         /// <summary>
         /// 是否展开所有任务组和任务。
         /// </summary>
@@ -88,6 +90,10 @@ namespace EFramework.Editor
         /// 滚动视图位置。
         /// </summary>
         internal Vector2 scroll = Vector2.zero;
+
+        internal const string FAIL = "TestFailed";
+        internal const string SUCCESS = "TestPassed";
+        internal const string UNKNOW = "TestNormal";
 
         /// <summary>
         /// 窗口启用时的回调，初始化面板实例并重置状态。
@@ -329,7 +335,7 @@ namespace EFramework.Editor
                     var gfoldout = true;
                     var gfoldoutRect = EditorGUILayout.GetControlRect();
                     if (groupFoldouts.ContainsKey(groupName)) gfoldout = groupFoldouts[groupName];
-                    gfoldout = EditorGUI.Foldout(gfoldoutRect, gfoldout, new GUIContent(groupName, group[0].Tooltip));
+                    gfoldout = EditorGUI.Foldout(gfoldoutRect, gfoldout, new GUIContent(groupName, GetGroupStatusIcon(group), group[0].Tooltip));
                     groupFoldouts[groupName] = gfoldout;
 
                     GUILayout.FlexibleSpace();
@@ -401,13 +407,14 @@ namespace EFramework.Editor
                                 var sidx = idx >= 0 ? $" #{idx + 1}" : "";
                                 var tfoldout = false;
                                 var tfoldoutRect = EditorGUILayout.GetControlRect();
+                                var icon = GetTaskStatusIcon(meta.Name);
                                 if (meta.Params != null && meta.Params.Count > 0 || meta.Worker != null && typeof(XEditor.Tasks.Panel.IOnGUI).IsAssignableFrom(meta.Worker))
                                 {
                                     if (taskFoldouts.ContainsKey(meta)) tfoldout = taskFoldouts[meta];
-                                    tfoldout = EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, meta.Tooltip));
+                                    tfoldout = EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, icon, meta.Tooltip));
                                     taskFoldouts[meta] = tfoldout;
                                 }
-                                else EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, meta.Tooltip));
+                                else EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, icon, meta.Tooltip));
                                 GUILayout.FlexibleSpace();
                                 if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture("d_PlayButton@2x"), "Execute task."), EditorStyles.iconButton) ||
                                 (tfoldoutRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.clickCount == 2))
@@ -514,7 +521,82 @@ namespace EFramework.Editor
                 worker.Runasync = meta.Runasync;
                 // 因任务间的依赖关系未知，多任务并发时，且有主线程任务的情况下，使用串行模式执行
                 if (workers.Count > 1 && hasSync && worker.Runasync) worker.Runasync = false;
-                XEditor.Tasks.Execute(worker: worker, arguments: arguments);
+                var report = XEditor.Tasks.Execute(worker: worker, arguments: arguments);
+                taskReports[meta.Name] = (int)report.Result;
+            }
+            SaveTaskReportsCache();
+        }
+
+        /// <summary>
+        /// 获取任务组状态图标
+        /// </summary>
+        /// <param name="group"></param>
+        /// <returns></returns>
+        internal Texture GetGroupStatusIcon(List<XEditor.Tasks.WorkerAttribute> group)
+        {
+            var hasUnknown = false;
+            var hasFail = false;
+            foreach (var meta in group)
+            {
+                if (!taskReports.TryGetValue(meta.Name, out var result) || result == 0) // 0为未知
+                {
+                    hasUnknown = true;
+                    break;
+                }
+                if (result == 2) // 2为失败
+                {
+                    hasFail = true;
+                }
+            }
+            if (hasUnknown) return XEditor.Icons.GetIcon(UNKNOW)?.image;
+            if (hasFail) return XEditor.Icons.GetIcon(FAIL)?.image;
+            return XEditor.Icons.GetIcon(SUCCESS)?.image;
+        }
+
+        /// <summary>
+        /// 获取任务状态图标
+        /// </summary>
+        /// <param name="metaName"></param>
+        /// <returns></returns>
+        internal Texture GetTaskStatusIcon(string metaName)
+        {
+            // 没有数据时，加载缓存
+            if (!taskReports.ContainsKey(metaName)) LoadTaskReportsCache();
+            taskReports.TryGetValue(metaName, out var result);
+            Texture icon = XEditor.Icons.GetIcon(UNKNOW)?.image;
+            if (result == (int)XEditor.Tasks.Result.Succeeded)
+                icon = XEditor.Icons.GetIcon(SUCCESS)?.image;
+            else if (result == (int)XEditor.Tasks.Result.Failed)
+                icon = XEditor.Icons.GetIcon(FAIL)?.image;
+            return icon;
+        }
+
+        /// <summary>
+        /// 保存任务状态缓存
+        /// </summary>
+        internal void SaveTaskReportsCache()
+        {
+            var cache = new XEditor.Tasks.TaskStatusCache(taskReports);
+            var json = JsonUtility.ToJson(cache);
+            XFile.SaveText(XFile.PathJoin(XEnv.ProjectPath, "Library/TaskReportsCache.json"), json);
+        }
+
+        /// <summary>
+        /// 加载任务状态缓存
+        /// </summary>
+        internal void LoadTaskReportsCache()
+        {
+            var path = "Library/TaskReportsCache.json";
+            if (!File.Exists(path)) return;
+            var json = File.ReadAllText(path);
+            var cache = JsonUtility.FromJson<XEditor.Tasks.TaskStatusCache>(json);
+            if (cache != null)
+            {
+                var dict = cache.ToDictionary();
+                foreach (var kv in dict)
+                {
+                    taskReports[kv.Key] = kv.Value;
+                }
             }
         }
     }

@@ -119,7 +119,7 @@ namespace EFramework.Editor
             /// </summary>
             /// <param name="icon_name">图标名称</param>
             /// <returns>图标的GUIContent对象，若不存在则返回null</returns>
-            internal GUIContent GetIcon(string icon_name)
+            internal static GUIContent GetIcon(string icon_name)
             {
                 GUIContent valid = null;
                 Debug.unityLogger.logEnabled = false;
