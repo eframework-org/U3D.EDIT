@@ -95,7 +95,7 @@ namespace EFramework.Editor
         // 日志缓存
         private readonly StringBuilder logBuilder = new StringBuilder();
         private Vector2 logScroll = Vector2.zero;
-        private const int MaxLogLength = 100000;
+        private const int MaxLogLength = 15000;
         private float logAreaHeight = 150f; // 日志区域初始高度
         private bool isResizingLogs = false;
         private const float minLogAreaHeight = 50f;
@@ -515,16 +515,15 @@ namespace EFramework.Editor
         /// <param name="workers">要执行的任务列表</param>
         internal void Run(List<XEditor.Tasks.IWorker> workers)
         {
+            if (workers == null || workers.Count == 0) return;
+
             logBuilder.Clear();
             var tempLogs = new StringBuilder();
             void LogHandler(string condition, string stackTrace, LogType type)
             {
                 tempLogs.AppendLine(condition);
-                if (!string.IsNullOrEmpty(stackTrace))
-                    tempLogs.AppendLine(stackTrace);
             }
             Application.logMessageReceived += LogHandler;
-            if (workers == null || workers.Count == 0) return;
 
             // 检查是否存在同步任务
             var hasSync = false;
@@ -553,7 +552,8 @@ namespace EFramework.Editor
                 worker.Runasync = meta.Runasync;
                 // 因任务间的依赖关系未知，多任务并发时，且有主线程任务的情况下，使用串行模式执行
                 if (workers.Count > 1 && hasSync && worker.Runasync) worker.Runasync = false;
-                AppendLog(worker.ID + "\n--------------------------------------------------------------------------");
+
+                AppendLog($"--- {worker.ID} ---\n");
                 var report = XEditor.Tasks.Execute(worker: worker, arguments: arguments);
                 if (tempLogs.Length > 0)
                 {
@@ -712,8 +712,6 @@ namespace EFramework.Editor
             for (int i = 0; i < lines.Length; ++i)
             {
                 string line = lines[i];
-
-                // 1. 支持 "] in 路径:行号" 格式
                 string textBeforeFilePath = "] in ";
                 int filePathIndex = line.IndexOf(textBeforeFilePath, StringComparison.Ordinal);
                 if (filePathIndex > 0)
@@ -733,36 +731,6 @@ namespace EFramework.Editor
                             var displayedPath = filePath;
 #endif
                             textWithHyperlinks.Append($"{line.Substring(0, filePathIndex)}<color=#40a0ff><a href=\"{filePath}\" line=\"{lineString}\">{displayedPath}:{lineString}</a></color>\n");
-                            continue;
-                        }
-                    }
-                }
-                // 2. 支持 "(at 路径:行号)" 格式
-                string atPattern = "(at ";
-                int atIndex = line.IndexOf(atPattern, StringComparison.Ordinal);
-                if (atIndex >= 0)
-                {
-                    int pathStart = atIndex + atPattern.Length;
-                    int pathEnd = line.IndexOf(")", pathStart, StringComparison.Ordinal);
-                    if (pathEnd > pathStart)
-                    {
-                        string fileAndLine = line.Substring(pathStart, pathEnd - pathStart);
-                        int colonIdx = fileAndLine.LastIndexOf(":", StringComparison.Ordinal);
-                        if (colonIdx > 0)
-                        {
-                            string filePath = fileAndLine.Substring(0, colonIdx);
-                            string lineNum = fileAndLine.Substring(colonIdx + 1);
-#if UNITY_2021_3_OR_NEWER
-                            var displayedPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), filePath);
-#else
-                            var displayedPath = filePath;
-#endif
-                            // 拼接前半部分
-                            textWithHyperlinks.Append(line.Substring(0, pathStart));
-                            // 超链接部分
-                            textWithHyperlinks.Append($"<color=#40a0ff><a href=\"{filePath}\" line=\"{lineNum}\">{displayedPath}:{lineNum}</a></color>");
-                            // 拼接后半部分
-                            textWithHyperlinks.Append(line.Substring(pathEnd) + "\n");
                             continue;
                         }
                     }
