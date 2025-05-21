@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEditor;
 using EFramework.Utility;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace EFramework.Editor
 {
@@ -549,7 +550,7 @@ namespace EFramework.Editor
         /// 执行任务列表
         /// </summary>
         /// <param name="workers">要执行的任务列表</param>
-        internal void Run(List<XEditor.Tasks.IWorker> workers)
+        internal async void Run(List<XEditor.Tasks.IWorker> workers)
         {
             if (workers == null || workers.Count == 0) return;
 
@@ -559,7 +560,7 @@ namespace EFramework.Editor
             {
                 tempLogs.AppendLine(condition);
             }
-            Application.logMessageReceived += LogHandler;
+            Application.logMessageReceivedThreaded += LogHandler;
 
             // 检查是否存在同步任务
             var hasSync = false;
@@ -593,12 +594,12 @@ namespace EFramework.Editor
                 logBuilder.Clear();
                 logBuilder.Append($"--- {worker.ID} ---\n");
                 var report = XEditor.Tasks.Execute(worker: worker, arguments: arguments);
+                if (worker.Runasync) await report.Task;
                 logBuilder.Append(tempLogs.ToString());
                 UpdateTaskInfo(meta.Name, report.Result.ToString(), logBuilder.ToString());
             }
-
             // 结束记录日志
-            Application.logMessageReceived -= LogHandler;
+            Application.logMessageReceivedThreaded -= LogHandler;
             SaveTaskInfoCache();
         }
 

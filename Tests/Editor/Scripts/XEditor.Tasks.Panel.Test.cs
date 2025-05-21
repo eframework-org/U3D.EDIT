@@ -347,6 +347,7 @@ public class TestXEditorTasksPanel
             panel.Run(new List<XEditor.Tasks.IWorker> { syncTask });
             Assert.That(TestVisualTask.executed, Is.True, "同步任务未执行");
             Assert.That(TestVisualTask.lastParam, Is.EqualTo("sync_value"), "同步任务参数传递错误");
+            Assert.That(panel.logBuilder.ToString().Contains("--- Test/Test Sync Visual Task ---"), Is.True, "同步任务日志应当存在");
 
             // 场景2：测试单个异步任务执行
             // 验证点：
@@ -357,6 +358,7 @@ public class TestXEditorTasksPanel
             panel.Run(new List<XEditor.Tasks.IWorker> { asyncTask });
             Assert.That(TestVisualTask.executed, Is.True, "异步任务未执行");
             Assert.That(TestVisualTask.lastParam, Is.EqualTo("async_value"), "异步任务参数传递错误");
+            Assert.That(panel.logBuilder.ToString().Contains("--- Test/Test Async Visual Task ---"), Is.True, "异步任务日志应当存在");
 
             // 场景3：测试多任务混合执行
             // 验证点：
@@ -368,6 +370,7 @@ public class TestXEditorTasksPanel
             var workers = new List<XEditor.Tasks.IWorker> { asyncTask, syncTask };
             panel.Run(workers);
             Assert.That(TestVisualTask.executed, Is.True, "多任务执行失败");
+            Assert.That(panel.logBuilder.ToString().Contains("--- Test/Test Sync Visual Task ---"), Is.True, "最后执行的任务日志应当存在");
 
             // 验证异步任务的执行模式转换
             Assert.That(asyncTask.Runasync, Is.False, "存在同步任务时，异步任务应该被转换为同步执行");
