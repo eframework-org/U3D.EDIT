@@ -724,30 +724,46 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 任务状态缓存，用于缓存任务状态信息到本地文件。
+            /// 任务信息结构体
             /// </summary>
-            public class TaskStatusCache
+            [Serializable]
+            internal struct TaskInfo
             {
-                public List<string> keys = new List<string>();
-                public List<int> values = new List<int>();
+                /// <summary>
+                /// 任务名称
+                /// </summary>
+                public string Name;
 
-                public TaskStatusCache() { }
-                public TaskStatusCache(Dictionary<string, int> dict)
+                /// <summary>
+                /// 任务状态
+                /// </summary>
+                public string Result;
+
+                /// <summary>
+                /// 任务日志
+                /// </summary>
+                public string Log;
+
+                public TaskInfo(string name, string result = "", string log = "")
                 {
-                    foreach (var kv in dict)
-                    {
-                        keys.Add(kv.Key);
-                        values.Add(kv.Value);
-                    }
+                    Name = name;
+                    if (result == "") result = XEditor.Tasks.Result.Unknown.ToString();
+                    Result = result;
+                    Log = log;
                 }
-                public Dictionary<string, int> ToDictionary()
+            }
+
+            /// <summary>
+            /// 任务信息列表包装器
+            /// </summary>
+            [Serializable]
+            internal class TaskInfoListWrapper
+            {
+                public List<TaskInfo> Tasks;
+
+                public TaskInfoListWrapper(List<TaskInfo> tasks)
                 {
-                    var dict = new Dictionary<string, int>();
-                    for (int i = 0; i < keys.Count; i++)
-                    {
-                        dict[keys[i]] = values[i];
-                    }
-                    return dict;
+                    Tasks = tasks;
                 }
             }
         }

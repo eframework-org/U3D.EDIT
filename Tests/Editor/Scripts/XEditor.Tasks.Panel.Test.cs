@@ -430,9 +430,9 @@ public class TestXEditorTasksPanel
 
         try
         {
-            panel.taskStatusDict[task1Meta.Name] = (int)result1;
-            panel.taskStatusDict[task2Meta.Name] = (int)result2;
-            panel.taskStatusDict[task3Meta.Name] = (int)result3;
+            panel.taskInfoList.Add(new XEditor.Tasks.TaskInfo(task1Meta.Name, result1.ToString()));
+            panel.taskInfoList.Add(new XEditor.Tasks.TaskInfo(task2Meta.Name, result2.ToString()));
+            panel.taskInfoList.Add(new XEditor.Tasks.TaskInfo(task3Meta.Name, result3.ToString()));
             var icon = panel.GetGroupStatusIcon(group);
             Assert.That(icon, Is.EqualTo(XEditor.Icons.GetIcon(expected)?.image), "状态图标应当正确");
         }
@@ -466,11 +466,11 @@ public class TestXEditorTasksPanel
     {
         var panel = ScriptableObject.CreateInstance<TasksPanel>();
         // 备份缓存文件
-        var bakPath = TasksPanel.CachePath + ".bak";
-        if (XFile.HasFile(TasksPanel.CachePath))
+        var bakPath = TasksPanel.TaskInfoCachePath + ".bak";
+        if (XFile.HasFile(TasksPanel.TaskInfoCachePath))
         {
-            XFile.CopyFile(TasksPanel.CachePath, bakPath);
-            XFile.DeleteFile(TasksPanel.CachePath);
+            XFile.CopyFile(TasksPanel.TaskInfoCachePath, bakPath);
+            XFile.DeleteFile(TasksPanel.TaskInfoCachePath);
         }
 
         try
@@ -479,40 +479,44 @@ public class TestXEditorTasksPanel
             // 验证点：
             // - 状态正确保存到文件
             // - 数据格式正确
-            panel.taskStatusDict["Task1"] = (int)XEditor.Tasks.Result.Succeeded;
-            panel.taskStatusDict["Task2"] = (int)XEditor.Tasks.Result.Failed;
-            panel.taskStatusDict["Task3"] = (int)XEditor.Tasks.Result.Unknown;
+            panel.taskInfoList.Add(new XEditor.Tasks.TaskInfo("Task1", XEditor.Tasks.Result.Succeeded.ToString(), "Log Test1"));
+            panel.taskInfoList.Add(new XEditor.Tasks.TaskInfo("Task2", XEditor.Tasks.Result.Failed.ToString(), "Log Test2"));
+            panel.taskInfoList.Add(new XEditor.Tasks.TaskInfo("Task3", XEditor.Tasks.Result.Unknown.ToString(), "Log Test3"));
 
-            panel.SaveTaskStatusCache();
+            panel.SaveTaskInfoCache();
 
             // 验证文件存在
-            var cachePath = XFile.PathJoin(XEnv.ProjectPath, TasksPanel.CachePath);
+            var cachePath = XFile.PathJoin(XEnv.ProjectPath, TasksPanel.TaskInfoCachePath);
             Assert.That(XFile.HasFile(cachePath), Is.True, "缓存文件应当创建");
 
             // 场景2：加载任务状态
             // 验证点：
             // - 正确读取缓存文件
             // - 状态正确恢复
-            panel.taskStatusDict.Clear();
-            panel.LoadTaskStatusCache();
+            panel.taskInfoList.Clear();
+            panel.LoadTaskInfoCache();
 
             // 验证状态恢复
-            Assert.That(panel.taskStatusDict["Task1"], Is.EqualTo((int)XEditor.Tasks.Result.Succeeded), "Task1状态应当为Succeeded");
-            Assert.That(panel.taskStatusDict["Task2"], Is.EqualTo((int)XEditor.Tasks.Result.Failed), "Task2状态应当为Failed");
-            Assert.That(panel.taskStatusDict["Task3"], Is.EqualTo((int)XEditor.Tasks.Result.Unknown), "Task3状态应当为Unknown");
+            Assert.That(panel.taskInfoList.Find(item => item.Name == "Task1").Result, Is.EqualTo(XEditor.Tasks.Result.Succeeded.ToString()), "Task1状态应当为Succeeded");
+            Assert.That(panel.taskInfoList.Find(item => item.Name == "Task2").Result, Is.EqualTo(XEditor.Tasks.Result.Failed.ToString()), "Task2状态应当为Failed");
+            Assert.That(panel.taskInfoList.Find(item => item.Name == "Task3").Result, Is.EqualTo(XEditor.Tasks.Result.Unknown.ToString()), "Task3状态应当为Unknown");
+            Assert.That(panel.taskInfoList.Find(item => item.Name == "Task1").Log, Is.EqualTo("Log Test1"), "Task1的日志应当为Log Test1");
+            Assert.That(panel.taskInfoList.Find(item => item.Name == "Task2").Log, Is.EqualTo("Log Test2"), "Task2的日志应当为Log Test2");
+            Assert.That(panel.taskInfoList.Find(item => item.Name == "Task3").Log, Is.EqualTo("Log Test3"), "Task3的日志应当为Log Test3");
+
 
             // 场景3：加载不存在的缓存文件
             // 验证点：
             // - 优雅处理文件不存在的情况
             XFile.DeleteFile(cachePath);
             var emptyPanel = ScriptableObject.CreateInstance<TasksPanel>();
-            emptyPanel.LoadTaskStatusCache();
-            Assert.That(emptyPanel.taskStatusDict, Is.Empty, "不存在缓存文件时应返回空状态");
+            emptyPanel.LoadTaskInfoCache();
+            Assert.That(emptyPanel.taskInfoList, Is.Empty, "不存在缓存文件时应返回空状态");
         }
         finally
         {
             // 清理测试环境
-            var cachePath = XFile.PathJoin(XEnv.ProjectPath, TasksPanel.CachePath);
+            var cachePath = XFile.PathJoin(XEnv.ProjectPath, TasksPanel.TaskInfoCachePath);
             if (XFile.HasFile(cachePath))
             {
                 XFile.DeleteFile(cachePath);
@@ -520,7 +524,7 @@ public class TestXEditorTasksPanel
             // 还原备份文件
             if (XFile.HasFile(bakPath))
             {
-                XFile.CopyFile(bakPath, TasksPanel.CachePath);
+                XFile.CopyFile(bakPath, TasksPanel.TaskInfoCachePath);
                 XFile.DeleteFile(bakPath);
             }
 
@@ -554,11 +558,54 @@ public class TestXEditorTasksPanel
     {
         var panel = ScriptableObject.CreateInstance<TasksPanel>();
 
-        panel.taskStatusDict[metaName] = (int)resultType;
+        panel.taskInfoList.Add(new XEditor.Tasks.TaskInfo(metaName, resultType.ToString()));
         var icon = panel.GetTaskStatusIcon(metaName);
         Assert.That(icon, Is.EqualTo(XEditor.Icons.GetIcon(result)?.image), "状态图标应当正确");
 
         Object.DestroyImmediate(panel);
+    }
+
+    /// <summary>
+    /// 测试任务信息的更新逻辑。
+    /// </summary>
+    /// <remarks>
+    /// 测试内容：
+    /// 1. 新任务信息的添加逻辑
+    ///     - 验证新任务信息正确添加到列表中
+    /// 2. 任务信息的更新逻辑
+    ///     - 验证已存在任务信息的更新
+    /// </remarks>
+    [Test]
+    public void UpdateTaskInfo()
+    {
+        var panel = ScriptableObject.CreateInstance<TasksPanel>();
+
+        try
+        {
+            // 场景1：添加新任务
+            panel.taskInfoList.Clear();
+            panel.UpdateTaskInfo("TaskA", "Succeeded", "LogA");
+            Assert.That(panel.taskInfoList.Count, Is.EqualTo(1));
+            Assert.That(panel.taskInfoList[0].Name, Is.EqualTo("TaskA"));
+            Assert.That(panel.taskInfoList[0].Result, Is.EqualTo("Succeeded"));
+            Assert.That(panel.taskInfoList[0].Log, Is.EqualTo("LogA"));
+
+            // 场景2：更新已存在任务
+            panel.UpdateTaskInfo("TaskA", "Failed", "LogB");
+            Assert.That(panel.taskInfoList.Count, Is.EqualTo(1));
+            Assert.That(panel.taskInfoList[0].Name, Is.EqualTo("TaskA"));
+            Assert.That(panel.taskInfoList[0].Result, Is.EqualTo("Failed"));
+            Assert.That(panel.taskInfoList[0].Log, Is.EqualTo("LogB"));
+
+            // 场景3：添加另一个新任务
+            panel.UpdateTaskInfo("TaskB", "Unknown", "LogC");
+            Assert.That(panel.taskInfoList.Count, Is.EqualTo(2));
+            Assert.That(panel.taskInfoList.Exists(t => t.Name == "TaskB" && t.Result == "Unknown" && t.Log == "LogC"), Is.True);
+        }
+        finally
+        {
+            Object.DestroyImmediate(panel);
+        }
     }
 
     #endregion

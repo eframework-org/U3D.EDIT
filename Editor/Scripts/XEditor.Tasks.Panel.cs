@@ -75,7 +75,7 @@ namespace EFramework.Editor
         /// </remarks>
         internal readonly List<XEditor.Tasks.WorkerAttribute> taskOrders = new();
 
-        internal readonly Dictionary<string, int> taskStatusDict = new();
+        internal readonly List<XEditor.Tasks.TaskInfo> taskInfoList = new();
 
         /// <summary>
         /// 是否展开所有任务组和任务。
@@ -101,11 +101,6 @@ namespace EFramework.Editor
         /// 任务执行日志的滚动位置。
         /// </summary>
         internal Vector2 logScroll = Vector2.zero;
-
-        /// <summary>
-        /// 最大日志字符长度。
-        /// </summary>
-        internal const int MaxLogLength = 15000;
 
         /// <summary>
         /// 日志区域初始高度
@@ -135,7 +130,7 @@ namespace EFramework.Editor
         /// <summary>
         /// 任务状态缓存文件路径
         /// </summary>
-        internal const string CachePath = "Library/TaskStatusCache.json";
+        internal const string TaskInfoCachePath = "Library/TaskInfoCache.json";
 
         /// <summary>
         /// 窗口启用时的回调，初始化面板实例并重置状态。
@@ -458,6 +453,14 @@ namespace EFramework.Editor
                                 }
                                 else EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, icon, meta.Tooltip));
                                 GUILayout.FlexibleSpace();
+                                if (tfoldoutRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.clickCount == 1)
+                                {
+                                    Event.current.Use();
+                                    var taskInfo = taskInfoList.Find(item => item.Name == meta.Name);
+                                    logBuilder.Clear();
+                                    logBuilder.Append(taskInfo.Log);
+                                    logScroll = Vector2.zero;
+                                }
                                 if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture("d_PlayButton@2x"), "Execute task."), EditorStyles.iconButton) ||
                                 (tfoldoutRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.clickCount == 2))
                                 {
@@ -550,7 +553,7 @@ namespace EFramework.Editor
         {
             if (workers == null || workers.Count == 0) return;
 
-            logBuilder.Clear();
+            // 开始记录日志
             var tempLogs = new StringBuilder();
             void LogHandler(string condition, string stackTrace, LogType type)
             {
@@ -586,17 +589,17 @@ namespace EFramework.Editor
                 // 因任务间的依赖关系未知，多任务并发时，且有主线程任务的情况下，使用串行模式执行
                 if (workers.Count > 1 && hasSync && worker.Runasync) worker.Runasync = false;
 
-                AppendLog($"--- {worker.ID} ---\n");
+                tempLogs.Clear();
+                logBuilder.Clear();
+                logBuilder.Append($"--- {worker.ID} ---\n");
                 var report = XEditor.Tasks.Execute(worker: worker, arguments: arguments);
-                if (tempLogs.Length > 0)
-                {
-                    AppendLog(FormatLogWithHyperlinks(tempLogs.ToString()));
-                    AppendLog($"---MESSAGE TRUNCATED AT {MaxLogLength} CHARACTERS---\n");
-                }
-                taskStatusDict[meta.Name] = (int)report.Result;
+                logBuilder.Append(tempLogs.ToString());
+                UpdateTaskInfo(meta.Name, report.Result.ToString(), logBuilder.ToString());
             }
+
+            // 结束记录日志
             Application.logMessageReceived -= LogHandler;
-            SaveTaskStatusCache();
+            SaveTaskInfoCache();
         }
 
         /// <summary>
@@ -610,12 +613,13 @@ namespace EFramework.Editor
             var hasFail = false;
             foreach (var meta in group)
             {
-                if (!taskStatusDict.TryGetValue(meta.Name, out var result) || result == 0) // 0为未知
+                var taskInfo = taskInfoList.Find(item => item.Name == meta.Name);
+                if (string.IsNullOrEmpty(taskInfo.Name) || taskInfo.Result == XEditor.Tasks.Result.Unknown.ToString())
                 {
                     hasUnknown = true;
                     break;
                 }
-                if (result == 2) // 2为失败
+                if (taskInfo.Result == XEditor.Tasks.Result.Failed.ToString())
                 {
                     hasFail = true;
                 }
@@ -633,12 +637,13 @@ namespace EFramework.Editor
         internal Texture GetTaskStatusIcon(string metaName)
         {
             // 没有数据时，加载缓存
-            if (!taskStatusDict.ContainsKey(metaName)) LoadTaskStatusCache();
-            taskStatusDict.TryGetValue(metaName, out var result);
+            var taskInfo = taskInfoList.Find(item => item.Name == metaName);
+            if (string.IsNullOrEmpty(taskInfo.Name)) LoadTaskInfoCache();
+            var result = taskInfo.Result;
             Texture icon = XEditor.Icons.GetIcon(UnknowIcon)?.image;
-            if (result == (int)XEditor.Tasks.Result.Succeeded)
+            if (result == XEditor.Tasks.Result.Succeeded.ToString())
                 icon = XEditor.Icons.GetIcon(SuccessIcon)?.image;
-            else if (result == (int)XEditor.Tasks.Result.Failed)
+            else if (result == XEditor.Tasks.Result.Failed.ToString())
                 icon = XEditor.Icons.GetIcon(FailIcon)?.image;
             return icon;
         }
@@ -646,29 +651,45 @@ namespace EFramework.Editor
         /// <summary>
         /// 保存任务状态缓存
         /// </summary>
-        internal void SaveTaskStatusCache()
+        internal void SaveTaskInfoCache()
         {
-            var cache = new XEditor.Tasks.TaskStatusCache(taskStatusDict);
+            var cache = new XEditor.Tasks.TaskInfoListWrapper(taskInfoList);
             var json = JsonUtility.ToJson(cache);
-            XFile.SaveText(XFile.PathJoin(XEnv.ProjectPath, CachePath), json);
+            XFile.SaveText(XFile.PathJoin(XEnv.ProjectPath, TaskInfoCachePath), json);
         }
 
         /// <summary>
         /// 加载任务状态缓存
         /// </summary>
-        internal void LoadTaskStatusCache()
+        internal void LoadTaskInfoCache()
         {
-            if (!File.Exists(CachePath)) return;
-            var json = File.ReadAllText(CachePath);
-            var cache = JsonUtility.FromJson<XEditor.Tasks.TaskStatusCache>(json);
-            if (cache != null)
+            if (!File.Exists(TaskInfoCachePath)) return;
+            var json = File.ReadAllText(TaskInfoCachePath);
+            var cache = JsonUtility.FromJson<XEditor.Tasks.TaskInfoListWrapper>(json);
+            if (cache.Tasks != null)
             {
-                var dict = cache.ToDictionary();
-                foreach (var kv in dict)
+                foreach (var taskInfo in cache.Tasks)
                 {
-                    taskStatusDict[kv.Key] = kv.Value;
+                    UpdateTaskInfo(taskInfo.Name, taskInfo.Result, taskInfo.Log);
                 }
             }
+        }
+
+        /// <summary>
+        /// 更新任务信息，已存在则更新，不存在则新增
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="result"></param>
+        /// <param name="log"></param>
+        internal void UpdateTaskInfo(string name, string result, string log)
+        {
+            var taskInfo = new XEditor.Tasks.TaskInfo(name, result, log);
+            var taskIndex = taskInfoList.FindIndex(item => item.Name == taskInfo.Name);
+            if (taskIndex != -1 && !string.IsNullOrEmpty(taskInfoList[taskIndex].Name))
+            {
+                taskInfoList[taskIndex] = taskInfo;
+            }
+            else taskInfoList.Add(taskInfo);
         }
 
         /// <summary>
@@ -698,84 +719,6 @@ namespace EFramework.Editor
                     isResizingLogs = false;
                 }
             }
-        }
-
-        /// <summary>
-        /// 日志追加
-        /// </summary>
-        /// <param name="msg"></param>
-        private void AppendLog(string msg)
-        {
-            // 保留前两行，从第三行开始计算长度
-            var logStr = logBuilder.ToString();
-            var lines = logStr.Split('\n');
-            if (lines.Length > 2)
-            {
-                // 计算从第三行开始的总长度
-                int headLen = lines[0].Length + lines[1].Length + 2; // 两个换行
-                int tailLen = 0;
-                for (int i = 2; i < lines.Length; i++)
-                {
-                    tailLen += lines[i].Length + 1;
-                }
-                if (tailLen > MaxLogLength)
-                {
-                    // 截断第三行及以后
-                    int startIdx = headLen;
-                    int cutIdx = startIdx + tailLen - MaxLogLength;
-                    logBuilder.Remove(startIdx, cutIdx - startIdx);
-                }
-            }
-            logBuilder.AppendLine(msg);
-            Repaint();
-        }
-
-        /// <summary>
-        /// 将日志文本中的文件路径转换为可点击的超链接（用于跳转到源码）。
-        /// 支持 "] in 路径:行号" 和 "(at 路径:行号)" 两种格式。
-        /// </summary>
-        /// <param name="logText">原始日志文本</param>
-        /// <returns>带有超链接的富文本日志</returns>
-        private static string FormatLogWithHyperlinks(string logText)
-        {
-            StringBuilder textWithHyperlinks = new StringBuilder();
-            var lines = logText.Split(new string[] { "\n" }, StringSplitOptions.None);
-
-            for (int i = 0; i < lines.Length; ++i)
-            {
-                string line = lines[i];
-                string textBeforeFilePath = "] in ";
-                int filePathIndex = line.IndexOf(textBeforeFilePath, StringComparison.Ordinal);
-                if (filePathIndex > 0)
-                {
-                    filePathIndex += textBeforeFilePath.Length;
-                    if (line[filePathIndex] != '<')
-                    {
-                        string filePathPart = line.Substring(filePathIndex);
-                        int lineIndex = filePathPart.LastIndexOf(":", StringComparison.Ordinal);
-                        if (lineIndex > 0)
-                        {
-                            string lineString = filePathPart.Substring(lineIndex + 1);
-                            string filePath = filePathPart.Substring(0, lineIndex);
-#if UNITY_2021_3_OR_NEWER
-                            var displayedPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), filePath);
-#else
-                            var displayedPath = filePath;
-#endif
-                            textWithHyperlinks.Append($"{line.Substring(0, filePathIndex)}<color=#40a0ff><a href=\"{filePath}\" line=\"{lineString}\">{displayedPath}:{lineString}</a></color>\n");
-                            continue;
-                        }
-                    }
-                }
-
-                // 默认情况：直接写入该行
-                textWithHyperlinks.Append(line + "\n");
-            }
-            // 移除最后一个 \n
-            if (textWithHyperlinks.Length > 0) // 如果不为空，最后一定有\n
-                textWithHyperlinks.Remove(textWithHyperlinks.Length - 1, 1);
-
-            return textWithHyperlinks.ToString();
         }
     }
 
