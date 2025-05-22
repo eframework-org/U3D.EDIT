@@ -5,12 +5,11 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using EFramework.Utility;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EFramework.Editor
 {
@@ -94,37 +93,27 @@ namespace EFramework.Editor
         /// <summary>
         /// 任务执行结果。
         /// </summary>
-        internal readonly StringBuilder logBuilder = new();
+        internal readonly StringBuilder reportBuilder = new();
 
         /// <summary>
         /// 任务执行结果显示区域的滚动位置。
         /// </summary>
-        internal Vector2 logScroll = Vector2.zero;
+        internal Vector2 reportScroll = Vector2.zero;
 
         /// <summary>
         /// 任务执行结果显示区域初始高度。
         /// </summary>
-        internal float logAreaHeight = 150f;
+        internal float reportHeight = 150f;
 
         /// <summary>
         /// 是否正在调整任务执行结果显示区域高度。
         /// </summary>
-        internal bool isResizingLogs = false;
-
-        /// <summary>
-        /// 任务失败的结果显示按钮图标
-        /// </summary>
-        internal const string FailIcon = "d_console.erroricon.sml@2x";
-
-        /// <summary>
-        /// 任务成功的结果显示按钮图标
-        /// </summary>
-        internal const string SuccessIcon = "d_console.infoicon.sml@2x";
+        internal bool reportResizing = false;
 
         /// <summary>
         /// 缓存文件路径
         /// </summary>
-        internal const string ReportCachePath = "Library/TaskRunner";
+        internal static readonly string reportRoot = XFile.PathJoin(XEnv.ProjectPath, "Library/TaskRunner");
 
         /// <summary>
         /// 窗口启用时的回调，初始化面板实例并重置状态。
@@ -247,6 +236,7 @@ namespace EFramework.Editor
         /// </summary>
         internal void OnGUI()
         {
+            #region 头部视图
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.BeginHorizontal();
 
@@ -340,7 +330,9 @@ namespace EFramework.Editor
             EditorGUILayout.EndHorizontal();
             GUILayout.Space(4);
             EditorGUILayout.EndVertical();
+            #endregion
 
+            #region 任务列表
             scroll = GUILayout.BeginScrollView(scroll);
             if (taskGroups != null && taskGroups.Count > 0)
             {
@@ -446,15 +438,25 @@ namespace EFramework.Editor
                                 }
                                 else EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, meta.Tooltip));
                                 GUILayout.FlexibleSpace();
-                                var logIcon = GetLogButtonIcon(meta.Name);
-                                if (logIcon != null)
+
+                                var reportFile = XFile.PathJoin(reportRoot, XEditor.Tasks.Workers[meta].ID.MD5());
+                                if (XFile.HasFile(reportFile))
                                 {
-                                    if (GUILayout.Button(new GUIContent("", logIcon, "Show Report."), EditorStyles.iconButton))
+                                    var reportJson = XFile.OpenText(reportFile);
+                                    var report = XObject.FromJson<XEditor.Tasks.Report>(reportJson);
+                                    if (report != null)
                                     {
-                                        var report = LoadReportCache(meta.Name);
-                                        logBuilder.Clear();
-                                        logBuilder.Append(XObject.ToJson(report, true));
-                                        logScroll = Vector2.zero;
+                                        var reportIcon = report.Result == XEditor.Tasks.Result.Failed ? "d_console.erroricon.sml@2x" :
+                                            report.Result == XEditor.Tasks.Result.Succeeded ? "d_console.infoicon.sml@2x" : "d_console.warnicon.sml@2x";
+                                        if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture(reportIcon), "Show Report."), EditorStyles.iconButton))
+                                        {
+                                            reportBuilder.Clear();
+                                            var color = report.Result == XEditor.Tasks.Result.Failed ? "red" :
+                                                report.Result == XEditor.Tasks.Result.Succeeded ? "green" : "yellow";
+                                            reportBuilder.Append($"<color={color}><b>\"{XEditor.Tasks.Workers[meta].ID}\": </b></color>");
+                                            reportBuilder.Append(reportJson);
+                                            reportScroll = Vector2.zero;
+                                        }
                                     }
                                 }
                                 if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture("d_PlayButton@2x"), "Execute task."), EditorStyles.iconButton) ||
@@ -525,20 +527,48 @@ namespace EFramework.Editor
                 }
             }
             GUILayout.EndScrollView();
+            #endregion
 
-            // 绘制日志分割条
-            DrawLogSplitter();
+            #region 日志视图
+            // 日志分割
+            {
+                var splitter = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(8f), GUILayout.ExpandWidth(true));
+                var line = new Rect(splitter.x, splitter.center.y - 0.65f, splitter.width, 1f);  // 只画中间一条细线
+                EditorGUI.DrawRect(line, Color.black);
+                EditorGUIUtility.AddCursorRect(splitter, MouseCursor.ResizeVertical);
 
-            // 日志显示区域
-            logScroll = EditorGUILayout.BeginScrollView(logScroll, GUILayout.Height(logAreaHeight));
-            var richTextStyle = new GUIStyle(EditorStyles.label) { richText = true, wordWrap = true };
-            EditorGUILayout.SelectableLabel(
-                logBuilder.ToString(),
-                richTextStyle,
-                GUILayout.ExpandWidth(true),
-                GUILayout.Height(richTextStyle.CalcHeight(new GUIContent(logBuilder.ToString()), position.width - 20))
-            );
-            EditorGUILayout.EndScrollView();
+                if (Event.current.type == EventType.MouseDown && splitter.Contains(Event.current.mousePosition))
+                {
+                    reportResizing = true;
+                }
+                if (reportResizing)
+                {
+                    if (Event.current.type == EventType.MouseDrag)
+                    {
+                        reportHeight -= Event.current.delta.y;
+                        reportHeight = Mathf.Clamp(reportHeight, 50, position.height - 100);
+                        Event.current.Use();
+                    }
+                    if (Event.current.type == EventType.MouseUp)
+                    {
+                        reportResizing = false;
+                    }
+                }
+            }
+
+            // 日志显示
+            {
+                reportScroll = EditorGUILayout.BeginScrollView(reportScroll, GUILayout.Height(reportHeight));
+                var richTextStyle = new GUIStyle(EditorStyles.label) { richText = true, wordWrap = true };
+                EditorGUILayout.SelectableLabel(
+                    reportBuilder.ToString(),
+                    richTextStyle,
+                    GUILayout.ExpandWidth(true),
+                    GUILayout.Height(richTextStyle.CalcHeight(new GUIContent(reportBuilder.ToString()), position.width - 20))
+                );
+                EditorGUILayout.EndScrollView();
+            }
+            #endregion
         }
 
         /// <summary>
@@ -580,82 +610,17 @@ namespace EFramework.Editor
                 var report = XEditor.Tasks.Execute(worker: worker, arguments: arguments);
                 if (worker.Runasync) await report.Task;
 
-                var cacheFileName = worker.ID.Split("/").Last();
+                // 保存任务执行结果
                 var reportJson = XObject.ToJson(report, true);
-                logBuilder.Clear();
-                logBuilder.Append(reportJson);
-                logScroll = Vector2.zero;
-                // 保存结果
-                var reportFile = XFile.PathJoin(XEnv.ProjectPath, ReportCachePath, cacheFileName + ".json");
+                var reportFile = XFile.PathJoin(reportRoot, worker.ID.MD5());
                 XFile.SaveText(reportFile, reportJson);
-            }
-        }
 
-        /// <summary>
-        /// 获取任务结果按钮显示图标
-        /// </summary>
-        /// <param name="workerID">目标任务ID</param>
-        /// <returns>Texture 图标</returns>
-        internal Texture GetLogButtonIcon(string workerID)
-        {
-            var report = LoadReportCache(workerID);
-            var result = report?.Result;
-            Texture icon = null;
-            if (result == XEditor.Tasks.Result.Succeeded)
-                icon = XEditor.Icons.GetIcon(SuccessIcon)?.image;
-            else if (result == XEditor.Tasks.Result.Failed)
-                icon = XEditor.Icons.GetIcon(FailIcon)?.image;
-            return icon;
-        }
-
-        /// <summary>
-        /// 加载任务结果缓存
-        /// </summary>
-        /// <param name="workerID">目标任务ID</param>
-        /// <returns>任务结果</returns>
-        internal XEditor.Tasks.Report LoadReportCache(string workerID)
-        {
-            var cacheDirPath = XFile.PathJoin(XEnv.ProjectPath, ReportCachePath);
-            if (!XFile.HasDirectory(cacheDirPath) || Directory.GetFiles(cacheDirPath).Length == 0)
-            {
-                logBuilder.Clear();
-                return null;
-            }
-            var cacheFileName = workerID.Split("/").Last();
-            var cacheFilePath = XFile.PathJoin(cacheDirPath, cacheFileName + ".json");
-            if (!XFile.HasFile(cacheFilePath)) return null;
-            var report = XObject.FromJson<XEditor.Tasks.Report>(XFile.OpenText(cacheFilePath));
-            return report;
-        }
-
-        /// <summary>
-        /// 绘制日志分割条
-        /// </summary>
-        internal void DrawLogSplitter()
-        {
-            // 分割条
-            Rect splitterRect = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(8f), GUILayout.ExpandWidth(true));
-            // 只画中间一条细线
-            var lineRect = new Rect(splitterRect.x, splitterRect.center.y - 0.65f, splitterRect.width, 1f);
-            EditorGUI.DrawRect(lineRect, Color.black);
-            EditorGUIUtility.AddCursorRect(splitterRect, MouseCursor.ResizeVertical);
-
-            if (Event.current.type == EventType.MouseDown && splitterRect.Contains(Event.current.mousePosition))
-            {
-                isResizingLogs = true;
-            }
-            if (isResizingLogs)
-            {
-                if (Event.current.type == EventType.MouseDrag)
-                {
-                    logAreaHeight -= Event.current.delta.y;
-                    logAreaHeight = Mathf.Clamp(logAreaHeight, 50, position.height - 100);
-                    Event.current.Use();
-                }
-                if (Event.current.type == EventType.MouseUp)
-                {
-                    isResizingLogs = false;
-                }
+                reportBuilder.Clear();
+                var color = report.Result == XEditor.Tasks.Result.Failed ? "red" :
+                    report.Result == XEditor.Tasks.Result.Succeeded ? "green" : "yellow";
+                reportBuilder.Append($"<color=\"{color}><b>{worker.ID}\": </b></color>");
+                reportBuilder.Append(reportJson);
+                reportScroll = Vector2.zero;
             }
         }
     }
@@ -707,11 +672,6 @@ namespace EFramework.Editor
                 internal const string MenuPath = "Tools/EFramework/Task Runner";
 
                 /// <summary>
-                /// 任务窗口实例。
-                /// </summary>
-                internal static TasksPanel Instance;
-
-                /// <summary>
                 /// 事件处理优先级。
                 /// </summary>
                 int Event.Callback.Priority => 0;
@@ -727,15 +687,7 @@ namespace EFramework.Editor
                 /// <remarks>
                 /// 查找并初始化已存在的任务面板实例。
                 /// </remarks>
-                void Event.Internal.OnEditorLoad.Process(params object[] _)
-                {
-                    var windows = Resources.FindObjectsOfTypeAll<TasksPanel>();
-                    if (windows != null && windows.Length > 0)
-                    {
-                        Instance = windows[0];
-                        Instance.OnEnable();
-                    }
-                }
+                void Event.Internal.OnEditorLoad.Process(params object[] _) { Reset(); }
 
                 /// <summary>
                 /// 打开任务窗口。
@@ -747,8 +699,8 @@ namespace EFramework.Editor
                 public static void Open()
                 {
                     var name = Path.GetFileName(MenuPath).Split("#")[0].Trim();
-                    Instance = EditorWindow.GetWindow<TasksPanel>(name);
-                    Instance.titleContent = new GUIContent(name, EditorGUIUtility.IconContent("d_PlayButton@2x").image);
+                    var window = EditorWindow.GetWindow<TasksPanel>(name);
+                    window.titleContent = new GUIContent(name, EditorGUIUtility.IconContent("d_PlayButton@2x").image);
                 }
 
                 /// <summary>
@@ -757,7 +709,17 @@ namespace EFramework.Editor
                 /// <remarks>
                 /// 重新初始化任务面板的状态，通常在任务配置发生变化时调用。
                 /// </remarks>
-                public static void Reset() { if (Instance) Instance.OnEnable(); }
+                public static void Reset()
+                {
+                    var windows = Resources.FindObjectsOfTypeAll<TasksPanel>();
+                    if (windows != null && windows.Length > 0)
+                    {
+                        foreach (var window in windows)
+                        {
+                            window.OnEnable();
+                        }
+                    }
+                }
             }
         }
     }
