@@ -453,8 +453,12 @@ namespace EFramework.Editor
                                             reportBuilder.Clear();
                                             var color = report.Result == XEditor.Tasks.Result.Failed ? "red" :
                                                 report.Result == XEditor.Tasks.Result.Succeeded ? "green" : "yellow";
-                                            reportBuilder.Append($"<color={color}><b>\"{XEditor.Tasks.Workers[meta].ID}\": </b></color>");
-                                            reportBuilder.Append(reportJson);
+                                            reportBuilder.Append($"\"{XEditor.Tasks.Workers[meta].ID}\": ");
+                                            reportBuilder.Append(reportJson
+                                                .Replace("\"Result\": 2", "<color=red><b>\"Result\": 2</b></color>")
+                                                .Replace("\"Result\": 1", "<color=green><b>\"Result\": 1</b></color>")
+                                                .Replace("\"Result\": 0", "<color=yellow><b>\"Result\": 0</b></color>")
+                                                .Replace("\"Result\": 3", "<color=yellow><b>\"Result\": 3</b></color>"));
                                             reportScroll = Vector2.zero;
                                         }
                                     }
@@ -618,8 +622,12 @@ namespace EFramework.Editor
                 reportBuilder.Clear();
                 var color = report.Result == XEditor.Tasks.Result.Failed ? "red" :
                     report.Result == XEditor.Tasks.Result.Succeeded ? "green" : "yellow";
-                reportBuilder.Append($"<color=\"{color}><b>{worker.ID}\": </b></color>");
-                reportBuilder.Append(reportJson);
+                reportBuilder.Append($"\"{worker.ID}\": ");
+                reportBuilder.Append(reportJson
+                    .Replace("\"Result\": 2", "<color=red><b>\"Result\": 2</b></color>")
+                    .Replace("\"Result\": 1", "<color=green><b>\"Result\": 1</b></color>")
+                    .Replace("\"Result\": 0", "<color=yellow><b>\"Result\": 0</b></color>")
+                    .Replace("\"Result\": 3", "<color=yellow><b>\"Result\": 3</b></color>"));
                 reportScroll = Vector2.zero;
             }
         }
