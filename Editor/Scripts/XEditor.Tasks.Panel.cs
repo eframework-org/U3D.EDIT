@@ -76,8 +76,6 @@ namespace EFramework.Editor
         /// </remarks>
         internal readonly List<XEditor.Tasks.WorkerAttribute> taskOrders = new();
 
-        internal readonly List<XEditor.Tasks.TaskInfo> taskInfoList = new();
-
         /// <summary>
         /// 是否展开所有任务组和任务。
         /// </summary>
@@ -94,44 +92,39 @@ namespace EFramework.Editor
         internal Vector2 scroll = Vector2.zero;
 
         /// <summary>
-        /// 任务执行日志。
+        /// 任务执行结果。
         /// </summary>
-        internal readonly StringBuilder logBuilder = new StringBuilder();
+        internal readonly StringBuilder logBuilder = new();
 
         /// <summary>
-        /// 任务执行日志的滚动位置。
+        /// 任务执行结果显示区域的滚动位置。
         /// </summary>
         internal Vector2 logScroll = Vector2.zero;
 
         /// <summary>
-        /// 日志区域初始高度
+        /// 任务执行结果显示区域初始高度。
         /// </summary>
         internal float logAreaHeight = 150f;
 
         /// <summary>
-        /// 是否正在调整日志区域高度
+        /// 是否正在调整任务执行结果显示区域高度。
         /// </summary>
         internal bool isResizingLogs = false;
 
         /// <summary>
-        /// 任务失败图标
+        /// 任务失败的结果显示按钮图标
         /// </summary>
-        internal const string FailIcon = "TestFailed";
+        internal const string FailIcon = "d_console.erroricon.sml@2x";
 
         /// <summary>
-        /// 任务成功图标
+        /// 任务成功的结果显示按钮图标
         /// </summary>
-        internal const string SuccessIcon = "TestPassed";
+        internal const string SuccessIcon = "d_console.infoicon.sml@2x";
 
         /// <summary>
-        /// 任务状态未知图标
+        /// 缓存文件路径
         /// </summary>
-        internal const string UnknowIcon = "TestNormal";
-
-        /// <summary>
-        /// 任务状态缓存文件路径
-        /// </summary>
-        internal const string TaskInfoCachePath = "Library/TaskInfoCache.json";
+        internal const string ReportCachePath = "Library/TaskRunner";
 
         /// <summary>
         /// 窗口启用时的回调，初始化面板实例并重置状态。
@@ -373,7 +366,7 @@ namespace EFramework.Editor
                     var gfoldout = true;
                     var gfoldoutRect = EditorGUILayout.GetControlRect();
                     if (groupFoldouts.ContainsKey(groupName)) gfoldout = groupFoldouts[groupName];
-                    gfoldout = EditorGUI.Foldout(gfoldoutRect, gfoldout, new GUIContent(groupName, GetGroupStatusIcon(group), group[0].Tooltip));
+                    gfoldout = EditorGUI.Foldout(gfoldoutRect, gfoldout, new GUIContent(groupName, group[0].Tooltip));
                     groupFoldouts[groupName] = gfoldout;
 
                     GUILayout.FlexibleSpace();
@@ -445,22 +438,24 @@ namespace EFramework.Editor
                                 var sidx = idx >= 0 ? $" #{idx + 1}" : "";
                                 var tfoldout = false;
                                 var tfoldoutRect = EditorGUILayout.GetControlRect();
-                                var icon = GetTaskStatusIcon(meta.Name);
                                 if (meta.Params != null && meta.Params.Count > 0 || meta.Worker != null && typeof(XEditor.Tasks.Panel.IOnGUI).IsAssignableFrom(meta.Worker))
                                 {
                                     if (taskFoldouts.ContainsKey(meta)) tfoldout = taskFoldouts[meta];
-                                    tfoldout = EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, icon, meta.Tooltip));
+                                    tfoldout = EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, meta.Tooltip));
                                     taskFoldouts[meta] = tfoldout;
                                 }
-                                else EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, icon, meta.Tooltip));
+                                else EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, meta.Tooltip));
                                 GUILayout.FlexibleSpace();
-                                if (tfoldoutRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.clickCount == 1)
+                                var logIcon = GetLogButtonIcon(meta.Name);
+                                if (logIcon != null)
                                 {
-                                    Event.current.Use();
-                                    var taskInfo = taskInfoList.Find(item => item.Name == meta.Name);
-                                    logBuilder.Clear();
-                                    logBuilder.Append(taskInfo.Log);
-                                    logScroll = Vector2.zero;
+                                    if (GUILayout.Button(new GUIContent("", logIcon, "Show Report."), EditorStyles.iconButton))
+                                    {
+                                        var report = LoadReportCache(meta.Name);
+                                        logBuilder.Clear();
+                                        logBuilder.Append(XObject.ToJson(report, true));
+                                        logScroll = Vector2.zero;
+                                    }
                                 }
                                 if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture("d_PlayButton@2x"), "Execute task."), EditorStyles.iconButton) ||
                                 (tfoldoutRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.clickCount == 2))
@@ -554,14 +549,6 @@ namespace EFramework.Editor
         {
             if (workers == null || workers.Count == 0) return;
 
-            // 开始记录日志
-            var tempLogs = new StringBuilder();
-            void LogHandler(string condition, string stackTrace, LogType type)
-            {
-                tempLogs.AppendLine(condition);
-            }
-            Application.logMessageReceivedThreaded += LogHandler;
-
             // 检查是否存在同步任务
             var hasSync = false;
             foreach (var worker in workers)
@@ -590,107 +577,55 @@ namespace EFramework.Editor
                 // 因任务间的依赖关系未知，多任务并发时，且有主线程任务的情况下，使用串行模式执行
                 if (workers.Count > 1 && hasSync && worker.Runasync) worker.Runasync = false;
 
-                tempLogs.Clear();
-                logBuilder.Clear();
-                logBuilder.Append($"--- {worker.ID} ---\n");
                 var report = XEditor.Tasks.Execute(worker: worker, arguments: arguments);
                 if (worker.Runasync) await report.Task;
-                logBuilder.Append(tempLogs.ToString());
-                UpdateTaskInfo(meta.Name, report.Result.ToString(), logBuilder.ToString());
+
+                var cacheFileName = worker.ID.Split("/").Last();
+                var reportJson = XObject.ToJson(report, true);
+                logBuilder.Clear();
+                logBuilder.Append(reportJson);
+                logScroll = Vector2.zero;
+                // 保存结果
+                var reportFile = XFile.PathJoin(XEnv.ProjectPath, ReportCachePath, cacheFileName + ".json");
+                XFile.SaveText(reportFile, reportJson);
             }
-            // 结束记录日志
-            Application.logMessageReceivedThreaded -= LogHandler;
-            SaveTaskInfoCache();
         }
 
         /// <summary>
-        /// 获取任务组状态图标
+        /// 获取任务结果按钮显示图标
         /// </summary>
-        /// <param name="group"></param>
-        /// <returns></returns>
-        internal Texture GetGroupStatusIcon(List<XEditor.Tasks.WorkerAttribute> group)
+        /// <param name="workerID">目标任务ID</param>
+        /// <returns>Texture 图标</returns>
+        internal Texture GetLogButtonIcon(string workerID)
         {
-            var hasUnknown = false;
-            var hasFail = false;
-            foreach (var meta in group)
-            {
-                var taskInfo = taskInfoList.Find(item => item.Name == meta.Name);
-                if (string.IsNullOrEmpty(taskInfo.Name) || taskInfo.Result == XEditor.Tasks.Result.Unknown.ToString())
-                {
-                    hasUnknown = true;
-                    break;
-                }
-                if (taskInfo.Result == XEditor.Tasks.Result.Failed.ToString())
-                {
-                    hasFail = true;
-                }
-            }
-            if (hasUnknown) return XEditor.Icons.GetIcon(UnknowIcon)?.image;
-            if (hasFail) return XEditor.Icons.GetIcon(FailIcon)?.image;
-            return XEditor.Icons.GetIcon(SuccessIcon)?.image;
-        }
-
-        /// <summary>
-        /// 获取任务状态图标
-        /// </summary>
-        /// <param name="metaName"></param>
-        /// <returns></returns>
-        internal Texture GetTaskStatusIcon(string metaName)
-        {
-            // 没有数据时，加载缓存
-            var taskInfo = taskInfoList.Find(item => item.Name == metaName);
-            if (string.IsNullOrEmpty(taskInfo.Name)) LoadTaskInfoCache();
-            var result = taskInfo.Result;
-            Texture icon = XEditor.Icons.GetIcon(UnknowIcon)?.image;
-            if (result == XEditor.Tasks.Result.Succeeded.ToString())
+            var report = LoadReportCache(workerID);
+            var result = report?.Result;
+            Texture icon = null;
+            if (result == XEditor.Tasks.Result.Succeeded)
                 icon = XEditor.Icons.GetIcon(SuccessIcon)?.image;
-            else if (result == XEditor.Tasks.Result.Failed.ToString())
+            else if (result == XEditor.Tasks.Result.Failed)
                 icon = XEditor.Icons.GetIcon(FailIcon)?.image;
             return icon;
         }
 
         /// <summary>
-        /// 保存任务状态缓存
+        /// 加载任务结果缓存
         /// </summary>
-        internal void SaveTaskInfoCache()
+        /// <param name="workerID">目标任务ID</param>
+        /// <returns>任务结果</returns>
+        internal XEditor.Tasks.Report LoadReportCache(string workerID)
         {
-            var cache = new XEditor.Tasks.TaskInfoListWrapper(taskInfoList);
-            var json = JsonUtility.ToJson(cache);
-            XFile.SaveText(XFile.PathJoin(XEnv.ProjectPath, TaskInfoCachePath), json);
-        }
-
-        /// <summary>
-        /// 加载任务状态缓存
-        /// </summary>
-        internal void LoadTaskInfoCache()
-        {
-            if (!File.Exists(TaskInfoCachePath)) return;
-            var json = File.ReadAllText(TaskInfoCachePath);
-            var cache = JsonUtility.FromJson<XEditor.Tasks.TaskInfoListWrapper>(json);
-            if (cache.Tasks != null)
+            var cacheDirPath = XFile.PathJoin(XEnv.ProjectPath, ReportCachePath);
+            if (!XFile.HasDirectory(cacheDirPath) || Directory.GetFiles(cacheDirPath).Length == 0)
             {
-                foreach (var taskInfo in cache.Tasks)
-                {
-                    UpdateTaskInfo(taskInfo.Name, taskInfo.Result, taskInfo.Log);
-                }
+                logBuilder.Clear();
+                return null;
             }
-        }
-
-        /// <summary>
-        /// 更新任务信息，已存在则更新，不存在则新增
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="result"></param>
-        /// <param name="log"></param>
-        internal void UpdateTaskInfo(string name, string result, string log)
-        {
-            var taskInfo = new XEditor.Tasks.TaskInfo(name, result, log);
-            var taskIndex = taskInfoList.FindIndex(item => item.Name == taskInfo.Name);
-            if (taskIndex != -1 && !string.IsNullOrEmpty(taskInfoList[taskIndex].Name))
-            {
-                taskInfoList[taskIndex] = taskInfo;
-            }
-            else taskInfoList.Add(taskInfo);
+            var cacheFileName = workerID.Split("/").Last();
+            var cacheFilePath = XFile.PathJoin(cacheDirPath, cacheFileName + ".json");
+            if (!XFile.HasFile(cacheFilePath)) return null;
+            var report = XObject.FromJson<XEditor.Tasks.Report>(XFile.OpenText(cacheFilePath));
+            return report;
         }
 
         /// <summary>
@@ -699,7 +634,7 @@ namespace EFramework.Editor
         internal void DrawLogSplitter()
         {
             // 分割条
-            Rect splitterRect = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(1), GUILayout.ExpandWidth(true));
+            Rect splitterRect = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(1.3f), GUILayout.ExpandWidth(true));
             EditorGUI.DrawRect(splitterRect, Color.black);
             EditorGUIUtility.AddCursorRect(splitterRect, MouseCursor.ResizeVertical);
 

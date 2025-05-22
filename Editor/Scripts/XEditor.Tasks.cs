@@ -428,7 +428,7 @@ namespace EFramework.Editor
                         }
                         return string.Empty;
                     }
-                    set { Current.Error = value; }
+                    set { if (Current != null) Current.Error = value; }
                 }
 
                 /// <summary>
@@ -448,7 +448,7 @@ namespace EFramework.Editor
                         }
                         return Result.Succeeded;
                     }
-                    set { Current.Result = value; }
+                    set { if (Current != null) Current.Result = value; }
                 }
 
                 /// <summary>
@@ -462,13 +462,14 @@ namespace EFramework.Editor
                         foreach (var phase in Phases) total += phase.Elapsed;
                         return total;
                     }
+                    set { if (Current != null) Current.Elapsed = value; }
                 }
 
                 /// <summary>
                 /// 任务执行阶段列表。
                 /// </summary>
-                [XObject.Json.Exclude] internal readonly List<Phase> phases = new();
-                public List<Phase> Phases { get => phases; }
+                [XObject.Json.Exclude] internal List<Phase> phases = new();
+                public List<Phase> Phases { get => phases; set => phases = value; }
 
                 /// <summary>
                 /// 任务额外数据信息。
@@ -720,50 +721,6 @@ namespace EFramework.Editor
                     Platform = platform;
                     Worker = worker;
                     Test = test;
-                }
-            }
-
-            /// <summary>
-            /// 任务信息结构体
-            /// </summary>
-            [Serializable]
-            internal struct TaskInfo
-            {
-                /// <summary>
-                /// 任务名称
-                /// </summary>
-                public string Name;
-
-                /// <summary>
-                /// 任务状态
-                /// </summary>
-                public string Result;
-
-                /// <summary>
-                /// 任务日志
-                /// </summary>
-                public string Log;
-
-                public TaskInfo(string name, string result = "", string log = "")
-                {
-                    Name = name;
-                    if (result == "") result = XEditor.Tasks.Result.Unknown.ToString();
-                    Result = result;
-                    Log = log;
-                }
-            }
-
-            /// <summary>
-            /// 任务信息列表包装器
-            /// </summary>
-            [Serializable]
-            internal class TaskInfoListWrapper
-            {
-                public List<TaskInfo> Tasks;
-
-                public TaskInfoListWrapper(List<TaskInfo> tasks)
-                {
-                    Tasks = tasks;
                 }
             }
         }
