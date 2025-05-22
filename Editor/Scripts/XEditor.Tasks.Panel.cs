@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -88,6 +89,31 @@ namespace EFramework.Editor
         /// 滚动视图位置。
         /// </summary>
         internal Vector2 scroll = Vector2.zero;
+
+        /// <summary>
+        /// 任务执行结果。
+        /// </summary>
+        internal readonly StringBuilder reportBuilder = new();
+
+        /// <summary>
+        /// 任务执行结果显示区域的滚动位置。
+        /// </summary>
+        internal Vector2 reportScroll = Vector2.zero;
+
+        /// <summary>
+        /// 任务执行结果显示区域初始高度。
+        /// </summary>
+        internal float reportHeight = 150f;
+
+        /// <summary>
+        /// 是否正在调整任务执行结果显示区域高度。
+        /// </summary>
+        internal bool reportResizing = false;
+
+        /// <summary>
+        /// 缓存文件路径
+        /// </summary>
+        internal static readonly string reportRoot = XFile.PathJoin(XEnv.ProjectPath, "Library/TaskRunner");
 
         /// <summary>
         /// 窗口启用时的回调，初始化面板实例并重置状态。
@@ -210,6 +236,7 @@ namespace EFramework.Editor
         /// </summary>
         internal void OnGUI()
         {
+            #region 头部视图
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.BeginHorizontal();
 
@@ -303,7 +330,9 @@ namespace EFramework.Editor
             EditorGUILayout.EndHorizontal();
             GUILayout.Space(4);
             EditorGUILayout.EndVertical();
+            #endregion
 
+            #region 任务列表
             scroll = GUILayout.BeginScrollView(scroll);
             if (taskGroups != null && taskGroups.Count > 0)
             {
@@ -409,6 +438,27 @@ namespace EFramework.Editor
                                 }
                                 else EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, meta.Tooltip));
                                 GUILayout.FlexibleSpace();
+
+                                var reportFile = XFile.PathJoin(reportRoot, XEditor.Tasks.Workers[meta].ID.MD5());
+                                if (XFile.HasFile(reportFile))
+                                {
+                                    var reportJson = XFile.OpenText(reportFile);
+                                    var report = XObject.FromJson<XEditor.Tasks.Report>(reportJson);
+                                    if (report != null)
+                                    {
+                                        var reportIcon = report.Result == XEditor.Tasks.Result.Failed ? "d_console.erroricon.sml@2x" :
+                                            report.Result == XEditor.Tasks.Result.Succeeded ? "d_console.infoicon.sml@2x" : "d_console.warnicon.sml@2x";
+                                        if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture(reportIcon), "Show Report."), EditorStyles.iconButton))
+                                        {
+                                            reportBuilder.Clear();
+                                            var color = report.Result == XEditor.Tasks.Result.Failed ? "red" :
+                                                report.Result == XEditor.Tasks.Result.Succeeded ? "green" : "yellow";
+                                            reportBuilder.Append($"<color={color}><b>\"{XEditor.Tasks.Workers[meta].ID}\": </b></color>");
+                                            reportBuilder.Append(reportJson);
+                                            reportScroll = Vector2.zero;
+                                        }
+                                    }
+                                }
                                 if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture("d_PlayButton@2x"), "Execute task."), EditorStyles.iconButton) ||
                                 (tfoldoutRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.clickCount == 2))
                                 {
@@ -477,13 +527,55 @@ namespace EFramework.Editor
                 }
             }
             GUILayout.EndScrollView();
+            #endregion
+
+            #region 日志视图
+            // 日志分割
+            {
+                var splitter = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(8f), GUILayout.ExpandWidth(true));
+                var line = new Rect(splitter.x, splitter.center.y - 0.65f, splitter.width, 1f);  // 只画中间一条细线
+                EditorGUI.DrawRect(line, Color.black);
+                EditorGUIUtility.AddCursorRect(splitter, MouseCursor.ResizeVertical);
+
+                if (Event.current.type == EventType.MouseDown && splitter.Contains(Event.current.mousePosition))
+                {
+                    reportResizing = true;
+                }
+                if (reportResizing)
+                {
+                    if (Event.current.type == EventType.MouseDrag)
+                    {
+                        reportHeight -= Event.current.delta.y;
+                        reportHeight = Mathf.Clamp(reportHeight, 50, position.height - 100);
+                        Event.current.Use();
+                    }
+                    if (Event.current.type == EventType.MouseUp)
+                    {
+                        reportResizing = false;
+                    }
+                }
+            }
+
+            // 日志显示
+            {
+                reportScroll = EditorGUILayout.BeginScrollView(reportScroll, GUILayout.Height(reportHeight));
+                var richTextStyle = new GUIStyle(EditorStyles.label) { richText = true, wordWrap = true };
+                EditorGUILayout.SelectableLabel(
+                    reportBuilder.ToString(),
+                    richTextStyle,
+                    GUILayout.ExpandWidth(true),
+                    GUILayout.Height(richTextStyle.CalcHeight(new GUIContent(reportBuilder.ToString()), position.width - 20))
+                );
+                EditorGUILayout.EndScrollView();
+            }
+            #endregion
         }
 
         /// <summary>
         /// 执行任务列表
         /// </summary>
         /// <param name="workers">要执行的任务列表</param>
-        internal void Run(List<XEditor.Tasks.IWorker> workers)
+        internal async void Run(List<XEditor.Tasks.IWorker> workers)
         {
             if (workers == null || workers.Count == 0) return;
 
@@ -514,7 +606,21 @@ namespace EFramework.Editor
                 worker.Runasync = meta.Runasync;
                 // 因任务间的依赖关系未知，多任务并发时，且有主线程任务的情况下，使用串行模式执行
                 if (workers.Count > 1 && hasSync && worker.Runasync) worker.Runasync = false;
-                XEditor.Tasks.Execute(worker: worker, arguments: arguments);
+
+                var report = XEditor.Tasks.Execute(worker: worker, arguments: arguments);
+                if (worker.Runasync) await report.Task;
+
+                // 保存任务执行结果
+                var reportJson = XObject.ToJson(report, true);
+                var reportFile = XFile.PathJoin(reportRoot, worker.ID.MD5());
+                XFile.SaveText(reportFile, reportJson);
+
+                reportBuilder.Clear();
+                var color = report.Result == XEditor.Tasks.Result.Failed ? "red" :
+                    report.Result == XEditor.Tasks.Result.Succeeded ? "green" : "yellow";
+                reportBuilder.Append($"<color=\"{color}><b>{worker.ID}\": </b></color>");
+                reportBuilder.Append(reportJson);
+                reportScroll = Vector2.zero;
             }
         }
     }
@@ -566,11 +672,6 @@ namespace EFramework.Editor
                 internal const string MenuPath = "Tools/EFramework/Task Runner";
 
                 /// <summary>
-                /// 任务窗口实例。
-                /// </summary>
-                internal static TasksPanel Instance;
-
-                /// <summary>
                 /// 事件处理优先级。
                 /// </summary>
                 int Event.Callback.Priority => 0;
@@ -586,15 +687,7 @@ namespace EFramework.Editor
                 /// <remarks>
                 /// 查找并初始化已存在的任务面板实例。
                 /// </remarks>
-                void Event.Internal.OnEditorLoad.Process(params object[] _)
-                {
-                    var windows = Resources.FindObjectsOfTypeAll<TasksPanel>();
-                    if (windows != null && windows.Length > 0)
-                    {
-                        Instance = windows[0];
-                        Instance.OnEnable();
-                    }
-                }
+                void Event.Internal.OnEditorLoad.Process(params object[] _) { Reset(); }
 
                 /// <summary>
                 /// 打开任务窗口。
@@ -606,8 +699,8 @@ namespace EFramework.Editor
                 public static void Open()
                 {
                     var name = Path.GetFileName(MenuPath).Split("#")[0].Trim();
-                    Instance = EditorWindow.GetWindow<TasksPanel>(name);
-                    Instance.titleContent = new GUIContent(name, EditorGUIUtility.IconContent("d_PlayButton@2x").image);
+                    var window = EditorWindow.GetWindow<TasksPanel>(name);
+                    window.titleContent = new GUIContent(name, EditorGUIUtility.IconContent("d_PlayButton@2x").image);
                 }
 
                 /// <summary>
@@ -616,7 +709,17 @@ namespace EFramework.Editor
                 /// <remarks>
                 /// 重新初始化任务面板的状态，通常在任务配置发生变化时调用。
                 /// </remarks>
-                public static void Reset() { if (Instance) Instance.OnEnable(); }
+                public static void Reset()
+                {
+                    var windows = Resources.FindObjectsOfTypeAll<TasksPanel>();
+                    if (windows != null && windows.Length > 0)
+                    {
+                        foreach (var window in windows)
+                        {
+                            window.OnEnable();
+                        }
+                    }
+                }
             }
         }
     }

@@ -222,10 +222,9 @@ public class TestXEditorTasksPanel
             if (XEditor.Tasks.Workers.ContainsKey(task2Meta)) XEditor.Tasks.Workers.Remove(task2Meta);
             if (XEditor.Tasks.Workers.ContainsKey(task3Meta)) XEditor.Tasks.Workers.Remove(task3Meta);
 
-            if (XEditor.Tasks.Panel.Instance != null) // 恢复面板状态
-            {
-                XEditor.Tasks.Panel.Instance.OnEnable();
-            }
+            // 恢复面板状态
+            Object.DestroyImmediate(panel);
+            XEditor.Tasks.Panel.Reset();
         }
     }
 
@@ -278,10 +277,9 @@ public class TestXEditorTasksPanel
             // 清理测试环境
             if (XEditor.Tasks.Workers.ContainsKey(taskMeta)) XEditor.Tasks.Workers.Remove(taskMeta);
 
-            if (XEditor.Tasks.Panel.Instance != null) // 恢复面板状态
-            {
-                XEditor.Tasks.Panel.Instance.OnEnable();
-            }
+            // 恢复面板状态
+            Object.DestroyImmediate(panel);
+            XEditor.Tasks.Panel.Reset();
         }
     }
 
@@ -347,6 +345,7 @@ public class TestXEditorTasksPanel
             panel.Run(new List<XEditor.Tasks.IWorker> { syncTask });
             Assert.That(TestVisualTask.executed, Is.True, "同步任务未执行");
             Assert.That(TestVisualTask.lastParam, Is.EqualTo("sync_value"), "同步任务参数传递错误");
+            Assert.That(XFile.HasFile(XFile.PathJoin(TasksPanel.reportRoot, syncTask.ID.MD5())), Is.True, "同步任务结果缓存应当存在");
 
             // 场景2：测试单个异步任务执行
             // 验证点：
@@ -357,6 +356,7 @@ public class TestXEditorTasksPanel
             panel.Run(new List<XEditor.Tasks.IWorker> { asyncTask });
             Assert.That(TestVisualTask.executed, Is.True, "异步任务未执行");
             Assert.That(TestVisualTask.lastParam, Is.EqualTo("async_value"), "异步任务参数传递错误");
+            Assert.That(XFile.HasFile(XFile.PathJoin(TasksPanel.reportRoot, asyncTask.ID.MD5())), Is.True, "异步任务结果缓存应当存在");
 
             // 场景3：测试多任务混合执行
             // 验证点：
@@ -394,10 +394,10 @@ public class TestXEditorTasksPanel
             if (XEditor.Tasks.Workers.ContainsKey(asyncMeta)) XEditor.Tasks.Workers.Remove(asyncMeta);
             if (syncParam.Persist) XPrefs.Asset.Unset(syncParam.ID);
 
-            panel.OnEnable();
+            Object.DestroyImmediate(panel);
+            XEditor.Tasks.Panel.Reset();
         }
     }
-
     #endregion
 }
 #endif

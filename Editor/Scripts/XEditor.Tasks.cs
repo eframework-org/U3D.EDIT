@@ -428,7 +428,7 @@ namespace EFramework.Editor
                         }
                         return string.Empty;
                     }
-                    set { Current.Error = value; }
+                    set { if (Current != null) Current.Error = value; }
                 }
 
                 /// <summary>
@@ -448,7 +448,7 @@ namespace EFramework.Editor
                         }
                         return Result.Succeeded;
                     }
-                    set { Current.Result = value; }
+                    set { if (Current != null) Current.Result = value; }
                 }
 
                 /// <summary>
@@ -462,13 +462,14 @@ namespace EFramework.Editor
                         foreach (var phase in Phases) total += phase.Elapsed;
                         return total;
                     }
+                    set { if (Current != null) Current.Elapsed = value; }
                 }
 
                 /// <summary>
                 /// 任务执行阶段列表。
                 /// </summary>
-                [XObject.Json.Exclude] internal readonly List<Phase> phases = new();
-                public List<Phase> Phases { get => phases; }
+                [XObject.Json.Exclude] internal List<Phase> phases = new();
+                public List<Phase> Phases { get => phases; set => phases = value; }
 
                 /// <summary>
                 /// 任务额外数据信息。

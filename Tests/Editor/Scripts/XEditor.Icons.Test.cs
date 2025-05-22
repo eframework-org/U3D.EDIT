@@ -102,7 +102,7 @@ public class TestXEditorIcons
     [TestCase("NonExistentIcon_12345", false)]
     public void Find(string iconName, bool shouldExist)
     {
-        var icon = iconsWindow.GetIcon(iconName);
+        var icon = XEditor.Icons.GetIcon(iconName);
         if (shouldExist)
         {
             Assert.That(icon, Is.Not.Null,
