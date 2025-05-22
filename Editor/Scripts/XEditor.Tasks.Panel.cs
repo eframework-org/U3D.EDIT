@@ -634,8 +634,10 @@ namespace EFramework.Editor
         internal void DrawLogSplitter()
         {
             // 分割条
-            Rect splitterRect = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(1.3f), GUILayout.ExpandWidth(true));
-            EditorGUI.DrawRect(splitterRect, Color.black);
+            Rect splitterRect = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(8f), GUILayout.ExpandWidth(true));
+            // 只画中间一条细线
+            var lineRect = new Rect(splitterRect.x, splitterRect.center.y - 0.65f, splitterRect.width, 1f);
+            EditorGUI.DrawRect(lineRect, Color.black);
             EditorGUIUtility.AddCursorRect(splitterRect, MouseCursor.ResizeVertical);
 
             if (Event.current.type == EventType.MouseDown && splitterRect.Contains(Event.current.mousePosition))
