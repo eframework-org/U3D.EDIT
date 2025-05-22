@@ -1,9 +1,15 @@
 # 更新记录
 
-## [0.0.5] - 
+## [0.0.5] - 2025-05-22
 ### 变更
 - 移除 Preferences 和 Task Runner 面板的快捷键，由用户自行设定
 - 移除 XEditor.Utility.ShowInExplorer 的快捷键绑定，由内置的 Assets/Show in Explorer 替代之
+
+### 新增
+- 新增 XEditor.Task.Panel 任务状态及结果显示
+
+### 修复
+- 修复 XEditor.Task.Panel 面板的刷新问题
 
 ## [0.0.4] - 2025-05-11
 ### 变更
