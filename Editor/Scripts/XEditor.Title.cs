@@ -91,22 +91,20 @@ namespace EFramework.Editor
                 EditorApplication.updateMainWindowTitle -= SetTitle;
                 EditorApplication.updateMainWindowTitle += SetTitle;
 #else
-                var focusChangedEvent = typeof(EditorApplication).GetField("focusChanged", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                var focusChangedEvent = typeof(EditorApplication).GetField("focusChanged", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
                 if (focusChangedEvent != null)
                 {
-                    var focusChangedDelegate = (System.Action<bool>)focusChangedEvent.GetValue(null);
-                    focusChangedDelegate -= OnFocusChanged;
-                    focusChangedDelegate += OnFocusChanged;
-                    focusChangedEvent.SetValue(null, focusChangedDelegate);
+                    var focusChangedDelegate = focusChangedEvent.GetValue(null) as Delegate;
+                    var onFocusChangedDelegate = Delegate.CreateDelegate(focusChangedEvent.FieldType, null, GetType().GetMethod("OnFocusChanged", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic));
+                    focusChangedEvent.SetValue(null, Delegate.Combine(focusChangedDelegate, onFocusChangedDelegate));
                 }
 
-                var updateMainWindowTitleEvent = typeof(EditorApplication).GetField("updateMainWindowTitle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                var updateMainWindowTitleEvent = typeof(EditorApplication).GetField("updateMainWindowTitle", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
                 if (updateMainWindowTitleEvent != null)
                 {
-                    var updateMainWindowTitleDelegate = (System.Action<object>)updateMainWindowTitleEvent.GetValue(null);
-                    updateMainWindowTitleDelegate -= SetTitle;
-                    updateMainWindowTitleDelegate += SetTitle;
-                    updateMainWindowTitleEvent.SetValue(null, updateMainWindowTitleDelegate);
+                    var updateMainWindowTitleDelegate = updateMainWindowTitleEvent.GetValue(null) as Delegate;
+                    var setTitleDelegate = Delegate.CreateDelegate(updateMainWindowTitleEvent.FieldType, null, GetType().GetMethod("SetTitle", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic));
+                    updateMainWindowTitleEvent.SetValue(null, Delegate.Combine(updateMainWindowTitleDelegate, setTitleDelegate));
                 }
 #endif
 
