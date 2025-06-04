@@ -223,16 +223,20 @@ namespace EFramework.Editor
                             gitDirtyCount = changes.Length;
                         }
 
-                        var pushResult = await Cmd.Run(bin: "git", print: false, args: new string[] { "rev-list", "@{push}..HEAD", "--count" });
-                        if (pushResult.Code == 0 && !string.IsNullOrEmpty(pushResult.Data))
+                        var fetchResult = await Cmd.Run(bin: "git", print: false, args: new string[] { "fetch", "origin" });
+                        if (fetchResult.Code == 0)
                         {
-                            int.TryParse(pushResult.Data.Trim(), out gitPushCount);
-                        }
+                            var pushResult = await Cmd.Run(bin: "git", print: false, args: new string[] { "rev-list", "@{push}..HEAD", "--count" });
+                            if (pushResult.Code == 0 && !string.IsNullOrEmpty(pushResult.Data))
+                            {
+                                int.TryParse(pushResult.Data.Trim(), out gitPushCount);
+                            }
 
-                        var pullResult = await Cmd.Run(bin: "git", print: false, args: new string[] { "rev-list", "HEAD..@{upstream}", "--count" });
-                        if (pullResult.Code == 0 && !string.IsNullOrEmpty(pullResult.Data))
-                        {
-                            int.TryParse(pullResult.Data.Trim(), out gitPullCount);
+                            var pullResult = await Cmd.Run(bin: "git", print: false, args: new string[] { "rev-list", "HEAD..@{upstream}", "--count" });
+                            if (pullResult.Code == 0 && !string.IsNullOrEmpty(pullResult.Data))
+                            {
+                                int.TryParse(pullResult.Data.Trim(), out gitPullCount);
+                            }
                         }
                     }
                 }

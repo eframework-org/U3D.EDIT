@@ -1,5 +1,9 @@
 # 更新记录
 
+## [0.0.9] - 2025-06-04
+### 修复
+- 修复 XEditor.Title 刷新 Git 项目拉取（pull）和推送（push）状态错误的问题
+
 ## [0.0.8] - 2025-06-04
 ### 修复
 - 修复 XEditor.Title 在 playModeStateChanged 事件触发时刷新的阻塞问题
