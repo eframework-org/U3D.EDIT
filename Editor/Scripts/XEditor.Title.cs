@@ -81,10 +81,8 @@ namespace EFramework.Editor
             /// <param name="args">事件参数（未使用）。</param>
             void Event.Internal.OnEditorLoad.Process(params object[] args)
             {
-                // Issue: playModeStateChanged 时调用 Refresh 函数会引起 Cmd.Run 死锁，导致 Unity 编辑器卡在 Reload Script Assemblies
-                // 问题本质：playModeStateChanged 时线程释放可能存在问题，尽量避免这种用法
-                // EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
-                // EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+                EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+                EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 
 #if UNITY_6000_0_OR_NEWER
                 EditorApplication.focusChanged -= OnFocusChanged;
@@ -123,7 +121,7 @@ namespace EFramework.Editor
             /// 播放模式状态变化时刷新标题信息。
             /// </summary>
             /// <param name="state">播放模式状态。</param>
-            internal void OnPlayModeStateChanged(PlayModeStateChange state) { _ = Refresh(); }
+            internal void OnPlayModeStateChanged(PlayModeStateChange state) { if (state == PlayModeStateChange.EnteredEditMode) _ = Refresh(); }
 
             /// <summary>
             /// 编辑器焦点变化时刷新标题信息。
