@@ -79,7 +79,7 @@ namespace EFramework.Editor
             /// 编辑器加载时的初始化处理，注册各种事件监听并刷新标题信息。
             /// </summary>
             /// <param name="args">事件参数（未使用）。</param>
-            void Event.Internal.OnEditorLoad.Process(params object[] args)
+            async void Event.Internal.OnEditorLoad.Process(params object[] args)
             {
                 EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
                 EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
@@ -108,26 +108,26 @@ namespace EFramework.Editor
                 }
 #endif
 
-                _ = Refresh();
+                await Refresh();
             }
 
             /// <summary>
             /// 在首选项应用时的刷新逻辑。
             /// </summary>
             /// <param name="args"></param>
-            void Event.Internal.OnPreferencesApply.Process(params object[] args) { _ = Refresh(); }
+            async void Event.Internal.OnPreferencesApply.Process(params object[] args) { await Refresh(); }
 
             /// <summary>
             /// 播放模式状态变化时刷新标题信息。
             /// </summary>
             /// <param name="state">播放模式状态。</param>
-            internal void OnPlayModeStateChanged(PlayModeStateChange state) { if (state == PlayModeStateChange.EnteredEditMode) _ = Refresh(); }
+            internal async void OnPlayModeStateChanged(PlayModeStateChange state) { if (state == PlayModeStateChange.EnteredEditMode) await Refresh(); }
 
             /// <summary>
             /// 编辑器焦点变化时刷新标题信息。
             /// </summary>
             /// <param name="hasFocus">是否获得焦点。</param>
-            internal void OnFocusChanged(bool hasFocus) { if (hasFocus) _ = Refresh(); }
+            internal async void OnFocusChanged(bool hasFocus) { if (hasFocus) await Refresh(); }
 
             /// <summary>
             /// 设置 Unity 编辑器的标题，添加首选项信息和 Git 版本控制信息。
@@ -194,15 +194,12 @@ namespace EFramework.Editor
                     var prefsDirty = !XFile.HasFile(XPrefs.Asset.File) || !XPrefs.Asset.Keys.MoveNext() ? "*" : "";
                     prefsLabel = $"[Prefs{prefsDirty}: {XEnv.Author}/{XEnv.Channel}/{XEnv.Version}/{XEnv.Mode}/{XLog.Level()}]";
                     isRefreshing = true;
-                    await XLoom.RunInMain(() =>
-                    {
 #if UNITY_6000_0_OR_NEWER
-                        EditorApplication.UpdateMainWindowTitle();
+                    EditorApplication.UpdateMainWindowTitle();
 #else
-                        var updateMainWindowTitleMethod = typeof(EditorApplication).GetMethod("UpdateMainWindowTitle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-                        if (updateMainWindowTitleMethod != null) updateMainWindowTitleMethod.Invoke(null, null);
+                    var updateMainWindowTitleMethod = typeof(EditorApplication).GetMethod("UpdateMainWindowTitle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                    if (updateMainWindowTitleMethod != null) updateMainWindowTitleMethod.Invoke(null, null);
 #endif
-                    });
 
                     gitBranch = "";
                     gitPushCount = 0;
@@ -242,18 +239,14 @@ namespace EFramework.Editor
                 finally
                 {
                     isRefreshing = false;
-                    await XLoom.RunInMain(() =>
-                    {
 #if UNITY_6000_0_OR_NEWER
-                        EditorApplication.UpdateMainWindowTitle();
+                    EditorApplication.UpdateMainWindowTitle();
 #else
-                        var updateMainWindowTitleMethod = typeof(EditorApplication).GetMethod("UpdateMainWindowTitle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-                        if (updateMainWindowTitleMethod != null) updateMainWindowTitleMethod.Invoke(null, null);
+                    var updateMainWindowTitleMethod = typeof(EditorApplication).GetMethod("UpdateMainWindowTitle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                    if (updateMainWindowTitleMethod != null) updateMainWindowTitleMethod.Invoke(null, null);
 #endif
-                    });
                 }
             }
         }
     }
 }
-
