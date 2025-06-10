@@ -161,7 +161,7 @@ public class TestXEditorTasksPanel
         var task3Meta = new XEditor.Tasks.WorkerAttribute("Test Visual Task3", "Test Group2", "Test Visual Task 3");
         XEditor.Tasks.Workers[task3Meta] = task3;
 
-        var panel = ScriptableObject.CreateInstance<TasksPanel>();
+        var panel = ScriptableObject.CreateInstance<TaskRunner>();
 
         try
         {
@@ -256,7 +256,7 @@ public class TestXEditorTasksPanel
         var taskMeta = new XEditor.Tasks.WorkerAttribute("Test Visual Task", "Test", "Test Visual Task");
         XEditor.Tasks.Workers[taskMeta] = task;
 
-        var panel = ScriptableObject.CreateInstance<TasksPanel>();
+        var panel = ScriptableObject.CreateInstance<TaskRunner>();
 
         try
         {
@@ -332,7 +332,7 @@ public class TestXEditorTasksPanel
         asyncMeta.Params = new List<XEditor.Tasks.Param> { asyncParam };
         XEditor.Tasks.Workers[asyncMeta] = asyncTask;
 
-        var panel = ScriptableObject.CreateInstance<TasksPanel>();
+        var panel = ScriptableObject.CreateInstance<TaskRunner>();
 
         try
         {
@@ -345,7 +345,7 @@ public class TestXEditorTasksPanel
             panel.Run(new List<XEditor.Tasks.IWorker> { syncTask });
             Assert.That(TestVisualTask.executed, Is.True, "同步任务未执行");
             Assert.That(TestVisualTask.lastParam, Is.EqualTo("sync_value"), "同步任务参数传递错误");
-            Assert.That(XFile.HasFile(XFile.PathJoin(TasksPanel.reportRoot, syncTask.ID.MD5())), Is.True, "同步任务结果缓存应当存在");
+            Assert.That(XFile.HasFile(XFile.PathJoin(TaskRunner.reportRoot, syncTask.ID.MD5())), Is.True, "同步任务结果缓存应当存在");
 
             // 场景2：测试单个异步任务执行
             // 验证点：
@@ -356,7 +356,7 @@ public class TestXEditorTasksPanel
             panel.Run(new List<XEditor.Tasks.IWorker> { asyncTask });
             Assert.That(TestVisualTask.executed, Is.True, "异步任务未执行");
             Assert.That(TestVisualTask.lastParam, Is.EqualTo("async_value"), "异步任务参数传递错误");
-            Assert.That(XFile.HasFile(XFile.PathJoin(TasksPanel.reportRoot, asyncTask.ID.MD5())), Is.True, "异步任务结果缓存应当存在");
+            Assert.That(XFile.HasFile(XFile.PathJoin(TaskRunner.reportRoot, asyncTask.ID.MD5())), Is.True, "异步任务结果缓存应当存在");
 
             // 场景3：测试多任务混合执行
             // 验证点：
