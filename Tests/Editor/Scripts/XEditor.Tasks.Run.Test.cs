@@ -4,14 +4,15 @@
 
 #if UNITY_INCLUDE_TESTS
 using NUnit.Framework;
-using EFramework.Editor;
-using System.Collections.Generic;
-using System.Threading;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.TestTools;
-using System.Text.RegularExpressions;
 using EFramework.Utility;
+using EFramework.Editor;
 
 /// <summary>
 /// XEditor.Tasks.Run 模块的单元测试类
@@ -401,6 +402,7 @@ public class TestXEditorTasksRun
         Assert.That(report.Phases[5].Error, Is.Not.Null);
     }
 
+#if UNITY_2022_1_OR_NEWER
     /// <summary>
     /// 测试批处理任务执行
     /// 
@@ -424,7 +426,7 @@ public class TestXEditorTasksRun
     [TestCase("Async")]
     [TestCase("Nonexist")]
     [TestCase("Params")]
-    public void Batch(string testCase)
+    public async Task Batch(string testCase)
     {
         // 准备测试任务
         var task1 = new TestTask { ID = "Test/Test Task1", Runasync = false };
@@ -451,7 +453,7 @@ public class TestXEditorTasksRun
         if (!XFile.HasDirectory(batchResultDir)) XFile.CreateDirectory(batchResultDir);
 
         var batchReport = XFile.PathJoin(batchResultDir, $"BatchReport-{testCase}.json");
-        var batchHandler = new XEditor.Tasks.Batch() as XEditor.Event.Internal.OnEditorLoad;
+        var batchHandler = new XEditor.Tasks.Batch();
 
         try
         {
@@ -466,7 +468,7 @@ public class TestXEditorTasksRun
                             "--Test Param=test1"
                         });
 
-                        batchHandler.Process();
+                        await batchHandler.Process();
 
                         Assert.That(task1.testThread, Is.EqualTo(Thread.CurrentThread.ManagedThreadId));
                         Assert.That(task1.testParam, Is.EqualTo("test1"));
@@ -488,7 +490,7 @@ public class TestXEditorTasksRun
                         task1.testThread = -1;
                         task2.testThread = -1;
 
-                        batchHandler.Process();
+                        await batchHandler.Process();
 
                         Assert.That(task1.testThread, Is.EqualTo(Thread.CurrentThread.ManagedThreadId));
                         Assert.That(task2.testThread, Is.Not.EqualTo(Thread.CurrentThread.ManagedThreadId));
@@ -511,7 +513,7 @@ public class TestXEditorTasksRun
                         task1.testThread = -1;
                         task2.testThread = -1;
 
-                        batchHandler.Process();
+                        await batchHandler.Process();
 
                         Assert.That(task1.testThread, Is.EqualTo(Thread.CurrentThread.ManagedThreadId));
                         Assert.That(task2.testThread, Is.EqualTo(Thread.CurrentThread.ManagedThreadId));
@@ -536,7 +538,7 @@ public class TestXEditorTasksRun
                         task1.testThread = -1;
                         task2.testThread = -1;
 
-                        batchHandler.Process();
+                        await batchHandler.Process();
 
                         var mainThreadId = Thread.CurrentThread.ManagedThreadId;
                         Assert.That(task1.testThread, Is.Not.EqualTo(mainThreadId));
@@ -554,7 +556,7 @@ public class TestXEditorTasksRun
                         });
 
                         LogAssert.Expect(LogType.Exception, new Regex("XEditor.Tasks.Batch: task of .* was not found."));
-                        batchHandler.Process();
+                        await batchHandler.Process();
                     }
                     break;
                 case "Params":
@@ -571,7 +573,7 @@ public class TestXEditorTasksRun
                             "-taskID", "Test/Test Task2"
                         });
 
-                        batchHandler.Process();
+                        await batchHandler.Process();
 
                         Assert.That(task1.testParam, Is.EqualTo("prefs1"), "Should use value from XPrefs");
                         Assert.That(task2.testParam, Is.EqualTo("prefs2"), "Should use value from XPrefs");
@@ -586,7 +588,7 @@ public class TestXEditorTasksRun
                             "--Test Param=cmd2"
                         });
 
-                        batchHandler.Process();
+                        await batchHandler.Process();
 
                         Assert.That(task1.testParam, Is.EqualTo("cmd1"), "Command line should override XPrefs");
                         Assert.That(task2.testParam, Is.EqualTo("cmd2"), "Command line should override XPrefs");
@@ -600,7 +602,7 @@ public class TestXEditorTasksRun
                             "-taskID", "Test/Test Task2"
                         });
 
-                        batchHandler.Process();
+                        await batchHandler.Process();
 
                         Assert.That(task1.testParam, Is.EqualTo("cmd1"), "Should use command line value");
                         Assert.That(task2.testParam, Is.EqualTo("prefs2"), "Should fallback to XPrefs value");
@@ -624,7 +626,7 @@ public class TestXEditorTasksRun
             XEnv.ParseArgs(reset: true);
         }
     }
-
+#endif
     #endregion
 }
 #endif

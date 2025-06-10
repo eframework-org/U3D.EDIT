@@ -47,6 +47,9 @@ public class TestXEditorOss
         if (XFile.HasDirectory(testDir)) XFile.DeleteDirectory(testDir);
         XFile.CreateDirectory(testDir);
 
+        var mcBin = XFile.PathJoin(XEnv.ProjectPath, "Library", Application.platform == RuntimePlatform.WindowsEditor ? "mc.exe" : "mc");
+        if (XFile.HasFile(mcBin)) XFile.DeleteFile(mcBin);
+
         XFile.SaveText(XFile.PathJoin(testDir, "test.txt"), $"test content {XTime.GetMillisecond()}");
     }
 
@@ -93,8 +96,7 @@ public class TestXEditorOss
 
         var report = XEditor.Tasks.Execute(oss);
 
-        Assert.That(report.Result, Is.EqualTo(XEditor.Tasks.Result.Succeeded),
-            "OSS 上传任务应该成功执行完成");
+        Assert.That(report.Result, Is.EqualTo(XEditor.Tasks.Result.Succeeded), "OSS 上传任务应该成功执行完成");
 
         // 验证上传的文件内容
         var localContent = XFile.OpenText(XFile.PathJoin(testDir, "test.txt"));
@@ -113,16 +115,13 @@ public class TestXEditorOss
         );
         task.Wait();
 
-        Assert.That(task.Result.Code, Is.EqualTo(0),
-            "MinIO 客户端下载命令应该成功执行");
+        Assert.That(task.Result.Code, Is.EqualTo(0), "MinIO 客户端下载命令应该成功执行");
 
         // 比较文件内容
         var remoteContent = XFile.OpenText(tempFile);
-        Assert.That(remoteContent, Is.EqualTo(localContent),
-            "上传后的远程文件内容应该与本地文件完全一致");
+        Assert.That(remoteContent, Is.EqualTo(localContent), "上传后的远程文件内容应该与本地文件完全一致");
 
-        Assert.That(XFile.HasDirectory(oss.Temp), Is.False,
-               "任务完成后临时目录应该被清理");
+        Assert.That(XFile.HasDirectory(oss.Temp), Is.False, "任务完成后临时目录应该被清理");
     }
 }
 #endif

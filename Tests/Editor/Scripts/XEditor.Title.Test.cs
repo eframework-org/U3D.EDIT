@@ -4,6 +4,7 @@
 
 #if UNITY_INCLUDE_TESTS
 using System;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using UnityEditor;
 using EFramework.Editor;
@@ -94,6 +95,7 @@ public class TestXEditorTitle
 #endif
     }
 
+#if UNITY_2022_1_OR_NEWER
     /// <summary>
     /// 测试标题刷新功能。
     /// </summary>
@@ -104,19 +106,19 @@ public class TestXEditorTitle
     /// 3. 非 Git 仓库环境
     /// </remarks>
     [Test]
-    public void Refresh()
+    public async Task Refresh()
     {
         XEditor.Title.isRefreshing = false;
-        _ = XEditor.Title.Refresh();
+        await XEditor.Title.Refresh();
 
         var prefsDirty = !XFile.HasFile(XPrefs.Asset.File) || !XPrefs.Asset.Keys.MoveNext() ? "*" : "";
         var expectedPrefs = $"[Prefs{prefsDirty}: {XEnv.Author}/{XEnv.Channel}/{XEnv.Version}/{XEnv.Mode}/{XLog.Level()}]";
         Assert.That(XEditor.Title.prefsLabel, Is.EqualTo(expectedPrefs), "Should update preferences label");
 
-        // 因为 Refresh 是异步执行的，所以无法验证 gitBranch
-        // var task = XEditor.Cmd.Run("git", print: false, args: new string[] { "rev-parse", "--git-dir" });
-        // if (task.Result.Code == 0) Assert.That(XEditor.Title.gitBranch, Is.Not.Empty); // 在 Git 仓库中
-        // else Assert.That(XEditor.Title.gitBranch, Is.Empty); // 不在 Git 仓库中
+        var task = XEditor.Cmd.Run("git", print: false, args: new string[] { "rev-parse", "--git-dir" });
+        if (task.Result.Code == 0) Assert.That(XEditor.Title.gitBranch, Is.Not.Empty); // 在 Git 仓库中
+        else Assert.That(XEditor.Title.gitBranch, Is.Empty); // 不在 Git 仓库中
     }
+#endif
 }
 #endif
