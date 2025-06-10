@@ -1,5 +1,14 @@
 # 更新记录
 
+## [0.1.0] - 2025-06-10
+### 变更
+- 优化 XEditor.Title 的刷新调用时机及潜在的卡顿（ANR）问题
+
+### 修复
+- 修复 XEditor.Cmd.Run 在编辑器构建脚本或启动时（如：InitializeOnLoad）卡顿问题
+- 修复 XEditor.Tasks.Run 在 batchMode 环境下执行异步任务的卡顿（ANR）问题
+- 修复 Task Runner 面板在 Unity 2021 版本无法被序列化的问题
+
 ## [0.0.9] - 2025-06-04
 ### 修复
 - 修复 XEditor.Title 刷新 Git 项目拉取（pull）和推送（push）状态错误的问题
