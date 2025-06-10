@@ -231,8 +231,22 @@ namespace EFramework.Editor
                         perform();
                         defer();
                     });
-                    if (worker.Runasync && XLoom.IsInMain()) report.Task.Start(); // 异步任务且在主线程调用
-                    else report.Task.RunSynchronously();
+                    if (worker.Runasync)
+                    {
+                        report.Task = XLoom.RunAsync(() =>
+                        {
+                            perform();
+                            defer();
+                        });
+                    }
+                    else
+                    {
+                        report.Task = XLoom.RunInMain(() =>
+                        {
+                            perform();
+                            defer();
+                        });
+                    }
                 }
 
                 return report;
@@ -388,10 +402,11 @@ namespace EFramework.Editor
                 /// </summary>
                 bool Event.Callback.Singleton => true;
 
+                async void Event.Internal.OnEditorLoad.Process(params object[] _) { await Process(); }
+
                 /// <summary>
                 /// 处理批量任务执行。
                 /// </summary>
-                /// <param name="_">未使用的参数数组</param>
                 /// <remarks>
                 /// <code>
                 /// 执行流程：
@@ -416,7 +431,7 @@ namespace EFramework.Editor
                 ///    - 设置退出代码
                 /// </code>
                 /// </remarks>
-                void Event.Internal.OnEditorLoad.Process(params object[] _)
+                internal async Task Process()
                 {
                     var tasks = new List<string>();
                     var taskAsyncs = new List<int>();
@@ -533,7 +548,8 @@ namespace EFramework.Editor
                             }
                         }
 
-                        Task.WaitAll(reports.Select(kvp => kvp.Value.Task).ToArray());
+                        // 使用 await 避免阻塞主线程
+                        foreach (var pairs in reports) await pairs.Value.Task;
 
                         if (string.IsNullOrEmpty(resultFile)) XLog.Warn("XEditor.Tasks.Batch: report file path is null.");
                         else
@@ -551,7 +567,7 @@ namespace EFramework.Editor
                     {
                         XLog.Panic(e);
                         XLog.Error("XEditor.Tasks.Batch: execute {0} task(s) with error: {1}", workers.Count, e.Message);
-                        if (batchMode && !testMode) EditorApplication.Exit(1); // 只能在主线程退出
+                        if (batchMode && !testMode) EditorApplication.Exit(1);
                     }
                 }
             }
