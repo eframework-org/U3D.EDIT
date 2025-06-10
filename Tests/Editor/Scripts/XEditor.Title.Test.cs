@@ -95,7 +95,7 @@ public class TestXEditorTitle
 #endif
     }
 
-#if UNITY_2022_1_OR_NEWER
+#if UNITY_6000_0_OR_NEWER
     /// <summary>
     /// 测试标题刷新功能。
     /// </summary>

@@ -402,7 +402,7 @@ public class TestXEditorTasksRun
         Assert.That(report.Phases[5].Error, Is.Not.Null);
     }
 
-#if UNITY_2022_1_OR_NEWER
+#if UNITY_6000_0_OR_NEWER
     /// <summary>
     /// 测试批处理任务执行
     /// 
