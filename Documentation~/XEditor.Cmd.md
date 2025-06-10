@@ -67,6 +67,11 @@ var result = await XEditor.Cmd.Run("git", XEnv.ProjectPath, true, "pull");
 ### 2. 命令执行被阻塞
 命令执行支持取消操作，在非批处理模式下可以通过进度条界面取消执行。如果命令执行时间过长，建议使用静默模式执行。
 
+### 3. Cmd.Run 引起编辑器重载时卡顿
+- 现象：在编辑器构建脚本或启动时（如：InitializeOnLoad）卡顿：Reload Script Assemblies/Domain
+- 原因：Process 异步输出死锁（BeginOutputReadLine/BeginErrorReadLine）
+- 解决：避免在程序集重载时使用显示输出，使用 `print = false` 替代之
+
 更多问题，请查阅[问题反馈](../CONTRIBUTING.md#问题反馈)。
 
 ## 项目信息

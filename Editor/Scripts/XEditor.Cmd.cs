@@ -205,7 +205,6 @@ namespace EFramework.Editor
             /// <remarks>
             /// - 所有输出均使用 UTF-8 编码。
             /// - 支持通过进度条取消执行（非批处理模式）。
-            /// - 自动移除输出中的 ANSI 转义序列。
             /// </remarks>
             public static Task<Result> Run(string bin, string cwd = "", bool print = true, bool progress = true, params string[] args)
             {
@@ -240,68 +239,78 @@ namespace EFramework.Editor
                     var stderr = new StringBuilder();
                     var outputs = new Queue<Output>();
                     var done = false;
+                    Task printTask = null;
 
                     using var proc = new Process { StartInfo = info };
                     proc.Start();
-                    proc.OutputDataReceived += (_, evt) => // 使用异步监听的方式，避免阻塞
-                    {
-                        if (evt.Data == null) return;
-                        lock (outputs) outputs.Enqueue(new Output() { Data = Regex.Replace(evt.Data, @"\x1b\[[0-9;]*[a-zA-Z]", ""), Error = false });
-                    };
-                    proc.ErrorDataReceived += (_, evt) =>
-                    {
-                        if (evt.Data == null) return;
-                        lock (outputs) outputs.Enqueue(new Output() { Data = Regex.Replace(evt.Data, @"\x1b\[[0-9;]*[a-zA-Z]", ""), Error = true });
-                    };
-                    proc.BeginOutputReadLine();
-                    proc.BeginErrorReadLine();
-
-                    var printTask = Task.Run(() =>
-                    {
-                        while (!done)
-                        {
-                            lock (outputs)
-                            {
-                                while (outputs.Count > 0)
-                                {
-                                    var output = outputs.Dequeue();
-                                    if (output.Error)
-                                    {
-                                        if (print) XLog.Error(output.Data);
-                                        stderr.AppendLine(output.Data);
-                                    }
-                                    else
-                                    {
-                                        if (print) XLog.Debug(output.Data);
-                                        stdout.AppendLine(output.Data);
-                                    }
-
-                                    if (!batchMode && print && progress && !cancel) XLoom.RunInMain(() =>
-                                    {
-                                        // 在日志数量过多的情况下可能刷新不及时
-                                        if (!cancel)
-                                        {
-                                            if (EditorUtility.DisplayCancelableProgressBar($"Run {name}", output.Data, 0.6f))
-                                            {
-                                                cancel = true;
-                                                EditorUtility.ClearProgressBar();
-                                            }
-                                        }
-                                    });
-                                }
-                            }
-                        }
-                        if (!batchMode && print && progress) XLoom.RunInMain(() => EditorUtility.ClearProgressBar());
-                    });
-
-                    proc.WaitForExit();
-                    done = true;
-                    Task.WaitAll(printTask);
 
                     if (print)
                     {
+                        proc.OutputDataReceived += (_, evt) => // 使用异步监听的方式，避免阻塞
+                        {
+                            if (evt.Data == null) return;
+                            lock (outputs) outputs.Enqueue(new Output() { Data = evt.Data, Error = false });
+                        };
+                        proc.ErrorDataReceived += (_, evt) =>
+                        {
+                            if (evt.Data == null) return;
+                            lock (outputs) outputs.Enqueue(new Output() { Data = evt.Data, Error = true });
+                        };
+                        proc.BeginOutputReadLine();
+                        proc.BeginErrorReadLine();
+
+                        printTask = Task.Run(() =>
+                        {
+                            while (!done)
+                            {
+                                lock (outputs)
+                                {
+                                    while (outputs.Count > 0)
+                                    {
+                                        var output = outputs.Dequeue();
+                                        if (output.Error)
+                                        {
+                                            if (print) XLog.Error(output.Data);
+                                            stderr.AppendLine(output.Data);
+                                        }
+                                        else
+                                        {
+                                            if (print) XLog.Debug(output.Data);
+                                            stdout.AppendLine(output.Data);
+                                        }
+
+                                        if (!batchMode && print && progress && !cancel) XLoom.RunInMain(() =>
+                                        {
+                                            // 在日志数量过多的情况下可能刷新不及时
+                                            if (!cancel)
+                                            {
+                                                if (EditorUtility.DisplayCancelableProgressBar($"Run {name}", output.Data, 0.6f))
+                                                {
+                                                    cancel = true;
+                                                    EditorUtility.ClearProgressBar();
+                                                }
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                            if (!batchMode && print && progress) XLoom.RunInMain(() => EditorUtility.ClearProgressBar());
+                        });
+                    }
+
+                    proc.WaitForExit();
+
+                    if (print)
+                    {
+                        done = true;
+                        Task.WaitAll(printTask);
                         if (proc.ExitCode != 0) XLog.Error("XEditor.Cmd.Run: finish {0} with code: {1}", name, proc.ExitCode);
                         else XLog.Debug("XEditor.Cmd.Run: finish {0} with code: {1}", name, proc.ExitCode);
+                    }
+                    else
+                    {
+                        stdout.Append(proc.StandardOutput.ReadToEnd());
+                        stderr.Append(proc.StandardError.ReadToEnd());
                     }
 
                     var result = new Result { Code = proc.ExitCode, Data = stdout.ToString() };
