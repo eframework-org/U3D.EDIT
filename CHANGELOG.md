@@ -1,5 +1,15 @@
 # 更新记录
 
+## [0.1.1] - 2025-06-11
+### 变更
+- 优化 XEditor.Tasks.Batch 的错误退出码
+- 移除 XEditor.Utility.GetSelectedPath() 函数
+
+### 修复
+- 修复 XEditor.Binary 的父类可重写变量缓存重置问题
+- 校正若干代码的日志输出信息
+- 修复 XEditor.Tasks.Report.Extras 字段未被 JSON 序列化的问题
+
 ## [0.1.0] - 2025-06-10
 ### 变更
 - 优化 XEditor.Title 的刷新调用时机及潜在的卡顿（ANR）问题
