@@ -560,8 +560,16 @@ namespace EFramework.Editor
                             XFile.SaveText(resultFile, XObject.ToJson(reports, true));
                         }
 
-                        XLog.Debug("XEditor.Tasks.Batch: finish to execute {0} task(s).", workers.Count);
-                        if (batchMode && !testMode) EditorApplication.Exit(0);
+                        var succeeded = 0;
+                        var failed = 0;
+                        foreach (var pairs in reports)
+                        {
+                            if (pairs.Value.Result == Result.Succeeded) succeeded++;
+                            else failed++;
+                        }
+
+                        XLog.Debug("XEditor.Tasks.Batch: finish to execute {0} task(s) with {1} succeeded and {2} failed.", workers.Count, succeeded, failed);
+                        if (batchMode && !testMode) EditorApplication.Exit(failed > 0 ? 1 : 0);
                     }
                     catch (Exception e)
                     {

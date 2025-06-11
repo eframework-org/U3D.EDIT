@@ -473,6 +473,9 @@ public class TestXEditorTasksRun
                         Assert.That(task1.testThread, Is.EqualTo(Thread.CurrentThread.ManagedThreadId));
                         Assert.That(task1.testParam, Is.EqualTo("test1"));
                         Assert.That(XFile.HasFile(batchReport), Is.True);
+
+                        var reports = XObject.FromJson<Dictionary<string, XEditor.Tasks.Report>>(XFile.OpenText(batchReport));
+                        Assert.IsTrue(reports.ContainsKey(task1.ID), "任务1的结果信息应当存在");
                     }
                     break;
                 case "Mixed":
@@ -496,7 +499,11 @@ public class TestXEditorTasksRun
                         Assert.That(task2.testThread, Is.Not.EqualTo(Thread.CurrentThread.ManagedThreadId));
                         Assert.That(task1.testParam, Is.EqualTo("test1"));
                         Assert.That(task2.testParam, Is.EqualTo("test2"));
+
                         Assert.That(XFile.HasFile(batchReport), Is.True);
+                        var reports = XObject.FromJson<Dictionary<string, XEditor.Tasks.Report>>(XFile.OpenText(batchReport));
+                        Assert.IsTrue(reports.ContainsKey(task1.ID), "任务1的结果信息应当存在");
+                        Assert.IsTrue(reports.ContainsKey(task2.ID), "任务2的结果信息应当存在");
                     }
                     break;
                 case "Sync":
@@ -519,7 +526,11 @@ public class TestXEditorTasksRun
                         Assert.That(task2.testThread, Is.EqualTo(Thread.CurrentThread.ManagedThreadId));
                         Assert.That(task1.testParam, Is.EqualTo("sync1"));
                         Assert.That(task2.testParam, Is.EqualTo("sync2"));
+
                         Assert.That(XFile.HasFile(batchReport), Is.True);
+                        var reports = XObject.FromJson<Dictionary<string, XEditor.Tasks.Report>>(XFile.OpenText(batchReport));
+                        Assert.IsTrue(reports.ContainsKey(task1.ID), "任务1的结果信息应当存在");
+                        Assert.IsTrue(reports.ContainsKey(task2.ID), "任务2的结果信息应当存在");
                     }
                     break;
                 case "Async":
@@ -545,7 +556,11 @@ public class TestXEditorTasksRun
                         Assert.That(task2.testThread, Is.Not.EqualTo(mainThreadId));
                         Assert.That(task1.testParam, Is.EqualTo("async1"));
                         Assert.That(task2.testParam, Is.EqualTo("async2"));
+
                         Assert.That(XFile.HasFile(batchReport), Is.True);
+                        var reports = XObject.FromJson<Dictionary<string, XEditor.Tasks.Report>>(XFile.OpenText(batchReport));
+                        Assert.IsTrue(reports.ContainsKey(task1.ID), "任务1的结果信息应当存在");
+                        Assert.IsTrue(reports.ContainsKey(task2.ID), "任务2的结果信息应当存在");
                     }
                     break;
                 case "Nonexist":
