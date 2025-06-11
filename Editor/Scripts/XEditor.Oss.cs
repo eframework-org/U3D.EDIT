@@ -289,7 +289,7 @@ namespace EFramework.Editor
                                 // 非Windows平台设置可执行权限
                                 Cmd.Run(bin: "chmod", args: new string[] { "755", Bin }).Wait();
 #endif
-                                XLog.Debug($"XEditor.OSS.Process: download minio client from <a href=\"file:///{url}\">{url}</a> succeed.");
+                                XLog.Debug($"XEditor.OSS.Process: download minio client from <a href=\"file:///{url}\">{url}</a> succeeded.");
                             }
                             EditorUtility.ClearProgressBar();
                         }).Wait();

@@ -23,9 +23,9 @@ public class TestXEditorCmd
 {
     private string testDir;
 
-    private string succeedCmdFile;
+    private string succeededCmdFile;
 
-    private string succeedCmdName;
+    private string succeededCmdName;
 
     private string failedCmdFile;
 
@@ -42,9 +42,9 @@ public class TestXEditorCmd
         if (!XFile.HasDirectory(testDir)) XFile.CreateDirectory(testDir);
 
         // 创建测试命令文件
-        succeedCmdName = Application.platform == RuntimePlatform.WindowsEditor ? "succeed.cmd" : "succeed";
-        succeedCmdFile = XFile.PathJoin(testDir, succeedCmdName);
-        XFile.SaveText(succeedCmdFile, Application.platform == RuntimePlatform.WindowsEditor ?
+        succeededCmdName = Application.platform == RuntimePlatform.WindowsEditor ? "succeeded.cmd" : "succeeded";
+        succeededCmdFile = XFile.PathJoin(testDir, succeededCmdName);
+        XFile.SaveText(succeededCmdFile, Application.platform == RuntimePlatform.WindowsEditor ?
             "@echo Hello World\r\n@exit 0" :  // Windows 命令格式
             "#!/bin/bash\necho Hello World\nexit 0");  // Unix 命令格式
 
@@ -57,7 +57,7 @@ public class TestXEditorCmd
         // 非 Windows 平台设置执行权限
         if (Application.platform != RuntimePlatform.WindowsEditor)
         {
-            XEditor.Cmd.Run("/bin/chmod", testDir, false, false, "+x", succeedCmdFile).Wait();
+            XEditor.Cmd.Run("/bin/chmod", testDir, false, false, "+x", succeededCmdFile).Wait();
             XEditor.Cmd.Run("/bin/chmod", testDir, false, false, "+x", failedCmdFile).Wait();
         }
     }
@@ -79,7 +79,7 @@ public class TestXEditorCmd
     {
         Assert.AreEqual(XEditor.Cmd.Find(""), "", "空命令名称应返回空字符串");
         Assert.AreEqual(XEditor.Cmd.Find("nonexistent"), "nonexistent", "不存在的命令应返回原字符串");
-        Assert.AreEqual(XEditor.Cmd.Find(succeedCmdName, testDir), succeedCmdFile, "指定路径的命令应返回完整路径");
+        Assert.AreEqual(XEditor.Cmd.Find(succeededCmdName, testDir), succeededCmdFile, "指定路径的命令应返回完整路径");
     }
 
     /// <summary>
@@ -89,8 +89,8 @@ public class TestXEditorCmd
     /// <param name="progress">是否显示进度</param>
     /// <param name="cmd">命令名称</param>
     /// <param name="code">期望的返回码</param>
-    [TestCase(false, false, "succeed", 0, TestName = "验证成功命令执行，无打印输出，无进度显示")]
-    [TestCase(true, false, "succeed", 0, TestName = "验证成功命令执行，启用打印输出，无进度显示")]
+    [TestCase(false, false, "succeeded", 0, TestName = "验证成功命令执行，无打印输出，无进度显示")]
+    [TestCase(true, false, "succeeded", 0, TestName = "验证成功命令执行，启用打印输出，无进度显示")]
     [TestCase(false, true, "failed", 1, TestName = "验证失败命令执行，无打印输出，启用进度显示")]
     [TestCase(true, true, "failed", 1, TestName = "验证失败命令执行，启用打印输出和进度显示")]
     public void Run(bool print, bool progress, string cmd, int code)

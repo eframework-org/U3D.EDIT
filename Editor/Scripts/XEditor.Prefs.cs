@@ -566,8 +566,8 @@ namespace EFramework.Editor
                                 catch (Exception e) { XLog.Panic(e); }
                             }
                         }
-                        XLog.Debug("Save {0}preferences of <a href=\"file:///{1}\">{2}</a> succeed.", apply ? "and apply " : "", Path.GetFullPath(activeTarget.File), Path.GetFileName(activeTarget.File));
-                        EditorWindow.focusedWindow.ShowNotification(new GUIContent("Save {0}preferences succeed.".Format(apply ? "and apply " : "")), 1f);
+                        XLog.Debug("Save {0}preferences of <a href=\"file:///{1}\">{2}</a> succeeded.", apply ? "and apply " : "", Path.GetFullPath(activeTarget.File), Path.GetFileName(activeTarget.File));
+                        EditorWindow.focusedWindow.ShowNotification(new GUIContent("Save {0}preferences succeeded.".Format(apply ? "and apply " : "")), 1f);
                         if (apply) Event.Notify<Event.Internal.OnPreferencesApply>();
                     });
                     if (string.IsNullOrEmpty(activeTarget.File))
@@ -698,7 +698,7 @@ namespace EFramework.Editor
                 doEval(prefs); // 执行递归求值
                 XFile.SaveText(XPrefs.IAsset.Uri, prefs.Json(false).Encrypt());
                 AssetDatabase.Refresh();
-                XLog.Debug("XEditor.Prefs.OnPreprocessBuild: streaming preferences of <a href=\"file:///{0}\">{1}</a> succeed.", Path.GetFullPath(assetFile), Path.GetFileName(assetFile));
+                XLog.Debug("XEditor.Prefs.OnPreprocessBuild: streaming preferences of <a href=\"file:///{0}\">{1}</a> succeeded.", Path.GetFullPath(assetFile), Path.GetFileName(assetFile));
             }
             #endregion
         }

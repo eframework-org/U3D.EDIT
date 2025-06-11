@@ -304,7 +304,7 @@ public class TestXEditorTasksRun
 
         // 验证第一个任务成功
         report.Task.Wait();
-        Assert.That(report.Result, Is.EqualTo(XEditor.Tasks.Result.Succeeded), "First task should succeed");
+        Assert.That(report.Result, Is.EqualTo(XEditor.Tasks.Result.Succeeded), "First task should succeeded");
     }
 
     /// <summary>
