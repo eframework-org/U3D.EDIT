@@ -474,7 +474,7 @@ namespace EFramework.Editor
                 /// <summary>
                 /// 任务额外数据信息。
                 /// </summary>
-                [XObject.Json.Exclude] public object Extras;
+                public object Extras;
             }
 
             /// <summary>
