@@ -87,14 +87,7 @@ foreach (var pair in dependencies)
 List<string> selectedAssets = XEditor.Utility.GetSelectedAssets();
 ```
 
-#### 4.2 获取选中路径
-获取当前在Project窗口中选中的路径。
-
-```csharp
-string path = XEditor.Utility.GetSelectedPath();
-```
-
-#### 4.3 在文件浏览器中显示
+#### 4.2 在文件浏览器中显示
 在系统文件浏览器中显示指定路径。
 
 ```csharp

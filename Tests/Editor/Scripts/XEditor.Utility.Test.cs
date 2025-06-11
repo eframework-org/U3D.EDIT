@@ -82,16 +82,6 @@ public class TestXEditorUtility
     }
 
     [Test]
-    public void GetSelectedPath()
-    {
-        // 验证 GetSelectedPath 方法是否返回正确的选中路径
-        var path = XEditor.Utility.GetSelectedPath();
-
-        // 验证返回的路径是否为默认的 "Assets"
-        Assert.That(path, Is.EqualTo("Assets"), "默认选中路径应为 'Assets'");
-    }
-
-    [Test]
     public void ZipDirectory()
     {
         // 验证 ZipDirectory 方法是否正确压缩目录
