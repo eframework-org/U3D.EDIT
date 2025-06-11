@@ -25,6 +25,6 @@
     "util"
   ],
   "dependencies": {
-    "org.eframework.u3d.util": "0.0.8"
+    "org.eframework.u3d.util": "0.0.9"
   }
 }
