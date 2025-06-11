@@ -332,6 +332,7 @@ namespace EFramework.Editor
 #endif
 
                 // 构建选项
+                options = BuildOptions.None; // 重置配置
                 if (Options != BuildOptions.None) options = Options;
                 else
                 {
@@ -353,6 +354,7 @@ namespace EFramework.Editor
                 }
 
                 // 构建路径
+                output = string.Empty; // 重置配置
                 if (!string.IsNullOrEmpty(Output)) output = Output;
                 else output = XFile.PathJoin(Root, XEnv.Channel, XEnv.Platform.ToString());
                 if (!XFile.HasDirectory(output)) XFile.CreateDirectory(output);
@@ -388,6 +390,7 @@ namespace EFramework.Editor
                     }
                 }
 
+                name = string.Empty; // 重置配置
                 if (!string.IsNullOrEmpty(Name)) name = Name;
                 else
                 {
@@ -404,10 +407,12 @@ namespace EFramework.Editor
                         max);
                 }
 
+                code = string.Empty; // 重置配置
                 if (!string.IsNullOrEmpty(Code)) code = Code;
                 else code = datetime + max;
 
                 // 构建文件
+                file = string.Empty; // 重置配置
                 if (!string.IsNullOrEmpty(File)) file = File;
                 else
                 {
@@ -485,7 +490,7 @@ namespace EFramework.Editor
                     report.Result = (Tasks.Result)rret.summary.result;
                     if (rret.summary.result != BuildResult.Succeeded) report.Error = $"BuildPipeline with {rret.summary.totalErrors} error(s).";
                 }
-                if (report.Current.Result == Tasks.Result.Succeeded) XLog.Debug("XEditor.Binary.Process: build <a href=\"file:///{0}\">{1}</a> succeed.", Path.GetFullPath(File), Name);
+                if (report.Current.Result == Tasks.Result.Succeeded) XLog.Debug("XEditor.Binary.Process: build <a href=\"file:///{0}\">{1}</a> succeeded.", Path.GetFullPath(File), Name);
                 else XLog.Error("XEditor.Binary.Process: build <a href=\"file:///{0}\">{1}</a> failed.", Path.GetFullPath(File), Name);
                 #endregion
 
@@ -561,7 +566,7 @@ namespace EFramework.Editor
                     }
                     Utility.ZipDirectory(symbolPath, symbolZip);
                     XFile.DeleteDirectory(symbolPath);
-                    XLog.Debug("XEditor.Binary.Process: backup symbols of <a href=\"file:///{0}\">{1}</a> succeed.", Path.GetFullPath(symbolZip), Name);
+                    XLog.Debug("XEditor.Binary.Process: backup symbols of <a href=\"file:///{0}\">{1}</a> succeeded.", Path.GetFullPath(symbolZip), Name);
                 }
                 #endregion
             }
