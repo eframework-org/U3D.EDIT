@@ -1,5 +1,12 @@
 # 更新记录
 
+## [0.1.2] - 2025-06-12
+### 变更
+- 调低 XEditor.Tasks.Batch 响应 OnEditorLoad 事件的优先级，使得高优先级关联业务先执行
+
+### 修复
+- 修复 XEditor.Prefs 在 OnPreprocessBuild 未序列化内存中的键值对的问题
+
 ## [0.1.1] - 2025-06-11
 ### 变更
 - 优化 XEditor.Tasks.Batch 的错误退出码
