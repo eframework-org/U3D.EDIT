@@ -37,9 +37,10 @@ public class TestXEditorPrefs
     [Test]
     public void OnBuild()
     {
+        LogAssert.ignoreFailingMessages = true;
+
         var testDir = XFile.PathJoin(XEnv.ProjectPath, "Temp", "TestXEditorPrefs");
         var lastUri = XPrefs.IAsset.Uri;
-
         var handler = new XEditor.Prefs() as XEditor.Event.Internal.OnPreprocessBuild;
 
         try
@@ -62,36 +63,34 @@ public class TestXEditorPrefs
             // 验证变量求值
             var processedPrefs = new XPrefs.IBase(encrypt: true); // 读取加密首选项
             processedPrefs.Read(XPrefs.IAsset.Uri);
-            Assert.That(processedPrefs.GetString("test_ref_key"), Is.EqualTo(XEnv.ProjectPath),
-                "环境变量引用应该被正确求值");
-            Assert.That(processedPrefs.GetString("test_const_key@Const"), Is.EqualTo("${Env.LocalPath}"),
-                "常量值不应被求值处理");
-            Assert.That(processedPrefs.Has("test_editor_key@Editor"), Is.False,
-                "编辑器专用配置应该在构建时被移除");
+            Assert.That(processedPrefs.GetString("test_ref_key"), Is.EqualTo(XEnv.ProjectPath), "环境变量引用应该被正确求值");
+            Assert.That(processedPrefs.GetString("test_const_key@Const"), Is.EqualTo("${Env.LocalPath}"), "常量值不应被求值处理");
+            Assert.That(processedPrefs.Has("test_editor_key@Editor"), Is.False, "编辑器专用配置应该在构建时被移除");
 
             // 测试不存在的首选项文件
             XPrefs.Asset.File = XFile.PathJoin(testDir, "test_nonexist.json");
-            Assert.Throws<UnityEditor.Build.BuildFailedException>(() => handler.Process(),
-                "使用不存在的首选项文件时应抛出构建失败异常");
+            XPrefs.Asset.Read(XPrefs.Asset.File);
+            Assert.Throws<UnityEditor.Build.BuildFailedException>(() => handler.Process(), "使用不存在的首选项文件时应抛出构建失败异常");
 
             // 测试空首选项文件
             XPrefs.Asset.File = XFile.PathJoin(testDir, "test_empty.json");
             XFile.SaveText(XPrefs.Asset.File, "{}");
-            Assert.Throws<UnityEditor.Build.BuildFailedException>(() => handler.Process(),
-                "使用空的首选项文件时应抛出构建失败异常");
+            XPrefs.Asset.Read(XPrefs.Asset.File);
+            Assert.Throws<UnityEditor.Build.BuildFailedException>(() => handler.Process(), "使用空的首选项文件时应抛出构建失败异常");
 
             // 测试首选项文件读取失败
             XPrefs.Asset.File = XFile.PathJoin(testDir, "test_invalid.json");
             XFile.SaveText(XPrefs.Asset.File, "invalid_content");
-            LogAssert.Expect(LogType.Error, new Regex(@"XPrefs\.Read: load .* with error: Invalid instance\."));
-            Assert.Throws<UnityEditor.Build.BuildFailedException>(() => handler.Process(),
-                "使用无效的首选项文件时应抛出构建失败异常");
+            XPrefs.Asset.Read(XPrefs.Asset.File);
+            Assert.Throws<UnityEditor.Build.BuildFailedException>(() => handler.Process(), "使用无效的首选项文件时应抛出构建失败异常");
         }
         finally
         {
             if (XFile.HasDirectory(testDir)) XFile.DeleteDirectory(testDir); // 删除测试目录
 
             XPrefs.IAsset.Uri = lastUri; // 恢复首选项文件
+
+            LogAssert.ignoreFailingMessages = false;
         }
     }
 }

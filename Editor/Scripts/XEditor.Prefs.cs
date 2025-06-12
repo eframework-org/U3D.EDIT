@@ -682,17 +682,18 @@ namespace EFramework.Editor
                     throw new BuildFailedException("XEditor.Prefs.OnPreprocessBuild: no preferences was found, please apply preferences before build.");
                 }
 
-                if (!XPrefs.Asset.Keys.MoveNext()) // 当前首选项为空
+                if (XPrefs.Asset.Count == 0)// 当前首选项为空
                 {
                     if (!Application.isBatchMode && BuildPipeline.isBuildingPlayer) Open();
                     throw new BuildFailedException("XEditor.Prefs.OnPreprocessBuild: streaming preferences of <a href=\"file:///{0}\">{1}</a> was empty.".Format(Path.GetFullPath(assetFile), Path.GetFileName(assetFile)));
                 }
 
                 var prefs = new XPrefs.IBase();
-                if (!prefs.Read(assetFile) || !prefs.Keys.MoveNext()) // 首选项读取异常或为空
+                // prefs.Parse(XPrefs.Asset.Json()): 将内存中的 Prefs 保存至 StreamingAssets 中，这样就可以支持环境变量覆盖首选项了 --Prefs@Asset.XXX = YYY
+                if (!prefs.Parse(XPrefs.Asset.Json(), out var error)) // 首选项解析异常
                 {
                     if (!Application.isBatchMode && BuildPipeline.isBuildingPlayer) Open();
-                    throw new BuildFailedException("XEditor.Prefs.OnPreprocessBuild: streaming preferences of <a href=\"file:///{0}\">{1}</a> failed.".Format(Path.GetFullPath(assetFile), Path.GetFileName(assetFile)));
+                    throw new BuildFailedException("XEditor.Prefs.OnPreprocessBuild: streaming preferences of <a href=\"file:///{0}\">{1}</a> failed: {2}".Format(Path.GetFullPath(assetFile), Path.GetFileName(assetFile), error));
                 }
 
                 doEval(prefs); // 执行递归求值
