@@ -326,7 +326,7 @@ namespace EFramework.Editor
                 /// <summary>
                 /// 错误信息。
                 /// </summary>
-                internal string error;
+                [XObject.Json.Exclude] internal string error;
 
                 /// <summary>
                 /// 格式化的错误信息，包含阶段名称。
