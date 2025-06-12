@@ -70,7 +70,7 @@ namespace EFramework.Editor
 
                     var packageMd5 = "";
 
-                    // 解析 package.json 文件中的任务配置
+                    // 解析 package.json 定义的任务
                     bool parsePackage()
                     {
                         try
@@ -183,8 +183,8 @@ namespace EFramework.Editor
                         return false;
                     }
 
-                    // 解析代码中的任务类型
-                    void parseClasses()
+                    // 解析 Attribute 标记的任务
+                    void parseAttribute()
                     {
                         var types = TypeCache.GetTypesWithAttribute<WorkerAttribute>();
                         var count = 0;
@@ -241,14 +241,14 @@ namespace EFramework.Editor
                             }
                         }
 
-                        if (count > 0) XLog.Debug("XEditor.Tasks.Init: parsed {0} task(s) from classes.", count);
+                        if (count > 0) XLog.Debug("XEditor.Tasks.Init: parsed {0} task(s) from attribute.", count);
                     }
 
                     // 根据优先级对任务元数据进行排序
                     void sortMetas() => Metas.Sort((e1, e2) => e1.Priority.CompareTo(e2.Priority));
 
                     if (XFile.HasFile(packageFile)) parsePackage();
-                    if (parseClass) parseClasses();
+                    if (parseClass) parseAttribute();
                     sortMetas();
                     Panel.Reset();
 
