@@ -395,7 +395,7 @@ namespace EFramework.Editor
                 /// <summary>
                 /// 事件处理优先级。
                 /// </summary>
-                int Event.Callback.Priority => 0;
+                int Event.Callback.Priority => 10000;
 
                 /// <summary>
                 /// 是否为单例事件处理器。
