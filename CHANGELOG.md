@@ -1,5 +1,12 @@
 # 更新记录
 
+## [0.1.3] - 2025-06-17
+### 变更
+- 新增 XEditor.Cmd.Run/Find 时自动补充项目中的 node_modules/.bin 目录
+
+### 修复
+- 修复 XEditor.Tasks.Batch 异步参数 runAsync 的解析逻辑错误
+
 ## [0.1.2] - 2025-06-12
 ### 变更
 - 调低 XEditor.Tasks.Batch 响应 OnEditorLoad 事件的优先级，使得高优先级关联业务先执行
