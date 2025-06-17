@@ -158,6 +158,7 @@ namespace EFramework.Editor
                     Path.PathSeparator + "/usr/local/bin" +
                     Path.PathSeparator + "/usr/local/share/dotnet";
 #endif
+                path += Path.PathSeparator + XFile.PathJoin(XEnv.ProjectPath, "node_modules", ".bin");
                 var paths = path.Split(Path.PathSeparator);
                 foreach (var part in paths)
                 {
@@ -224,11 +225,13 @@ namespace EFramework.Editor
                     StandardInputEncoding = Encoding.UTF8,
                     Arguments = args != null && args.Length > 0 ? string.Join(" ", args) : ""
                 };
+
+                info.Environment.TryGetValue("PATH", out var path);
 #if !UNITY_EDITOR_WIN
-                info.Environment["PATH"] = info.Environment["PATH"] +
-                    Path.PathSeparator + "/usr/local/bin" +
-                    Path.PathSeparator + "/usr/local/share/dotnet";
+                path += Path.PathSeparator + "/usr/local/bin" + Path.PathSeparator + "/usr/local/share/dotnet";
 #endif
+                path += Path.PathSeparator + XFile.PathJoin(XEnv.ProjectPath, "node_modules", ".bin");
+                info.Environment["PATH"] = path;
 
                 if (print) XLog.Debug("XEditor.Cmd.Run: start {0} with arguments: {1}", name, info.Arguments);
 
