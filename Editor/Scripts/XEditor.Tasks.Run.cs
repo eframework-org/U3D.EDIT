@@ -462,7 +462,7 @@ namespace EFramework.Editor
                                 }
 
                                 tasks.Add(value);
-                                taskAsyncs.Add(-1);
+                                taskAsyncs.Add(0);
                                 btask = true;
                             }
                             else if (name == "runAsync" && btask)
@@ -502,8 +502,8 @@ namespace EFramework.Editor
                                 if (worker.ID == task)
                                 {
                                     // if (workers.Contains(worker)) throw new Exception($"XEditor.Tasks.Batch: dumplicated task of {task}.");
-                                    var sasync = taskAsyncs[workers.Count];
-                                    if (sasync == -1) taskAsyncs[workers.Count] = meta.Runasync ? 1 : 0;
+                                    // var sasync = taskAsyncs[workers.Count];
+                                    // if (sasync == -1) taskAsyncs[workers.Count] = meta.Runasync ? 1 : 0;
                                     // 初始化参数
                                     var tempParams = taskParams[workers.Count];
                                     foreach (var param in meta.Params)
