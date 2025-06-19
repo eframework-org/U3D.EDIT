@@ -1,5 +1,9 @@
 # 更新记录
 
+## [0.1.4] - 
+### 修复
+- 修复 XEditor.Tasks 面板 Group 的 Tooltip 显示错误问题
+
 ## [0.1.3] - 2025-06-17
 ### 变更
 - 新增 XEditor.Cmd.Run/Find 时自动补充项目中的 node_modules/.bin 目录

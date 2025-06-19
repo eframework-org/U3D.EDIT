@@ -34,7 +34,7 @@ namespace EFramework.Editor
         /// 按照任务的 Group 属性进行分组，用于界面展示和批量操作。
         /// </remarks>
         internal readonly List<List<XEditor.Tasks.WorkerAttribute>> taskGroups = new();
-        
+
         /// <summary>
         /// 存储任务组选中状态的字典。
         /// </summary>
@@ -42,7 +42,7 @@ namespace EFramework.Editor
         /// key 为组名，value 为选中状态。用于批量操作。
         /// </remarks>
         internal readonly Dictionary<string, bool> groupSelects = new();
-        
+
         /// <summary>
         /// 存储任务选中状态的字典。
         /// </summary>
@@ -339,7 +339,7 @@ namespace EFramework.Editor
 
                     var gfoldout = EditorPrefs.GetBool(groupName, true);
                     var gfoldoutRect = EditorGUILayout.GetControlRect();
-                    gfoldout = EditorGUI.Foldout(gfoldoutRect, gfoldout, new GUIContent(groupName, group[0].Tooltip));
+                    gfoldout = EditorGUI.Foldout(gfoldoutRect, gfoldout, new GUIContent(groupName, string.Join(",", group.Select(ele => ele.Name))));
                     EditorPrefs.SetBool(groupName, gfoldout);
 
                     GUILayout.FlexibleSpace();
@@ -449,7 +449,7 @@ namespace EFramework.Editor
                                 if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture("d_PlayButton@2x"), "Execute task."), EditorStyles.iconButton) ||
                                 (tfoldoutRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.clickCount == 2))
                                 {
-                                    EditorPrefs.SetBool(meta.Name+"Loading", true);
+                                    EditorPrefs.SetBool(meta.Name + "Loading", true);
                                     Event.current.Use();
                                     XLoom.RunInNext(() =>
                                     {
@@ -613,7 +613,7 @@ namespace EFramework.Editor
                     .Replace("\"Result\": 0", "<color=yellow><b>\"Result\": 0</b></color>")
                     .Replace("\"Result\": 3", "<color=yellow><b>\"Result\": 3</b></color>"));
                 reportScroll = Vector2.zero;
-                EditorPrefs.SetBool(meta.Name+"Loading", false);
+                EditorPrefs.SetBool(meta.Name + "Loading", false);
             }
         }
     }
