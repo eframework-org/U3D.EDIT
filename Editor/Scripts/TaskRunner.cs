@@ -34,15 +34,7 @@ namespace EFramework.Editor
         /// 按照任务的 Group 属性进行分组，用于界面展示和批量操作。
         /// </remarks>
         internal readonly List<List<XEditor.Tasks.WorkerAttribute>> taskGroups = new();
-
-        /// <summary>
-        /// 存储任务组展开状态的字典。
-        /// </summary>
-        /// <remarks>
-        /// key 为组名，value 为展开状态。用于保持界面状态。
-        /// </remarks>
-        internal readonly Dictionary<string, bool> groupFoldouts = new();
-
+        
         /// <summary>
         /// 存储任务组选中状态的字典。
         /// </summary>
@@ -50,15 +42,7 @@ namespace EFramework.Editor
         /// key 为组名，value 为选中状态。用于批量操作。
         /// </remarks>
         internal readonly Dictionary<string, bool> groupSelects = new();
-
-        /// <summary>
-        /// 存储任务展开状态的字典。
-        /// </summary>
-        /// <remarks>
-        /// key 为任务元数据，value 为展开状态。用于保持界面状态。
-        /// </remarks>
-        internal readonly Dictionary<XEditor.Tasks.WorkerAttribute, bool> taskFoldouts = new();
-
+        
         /// <summary>
         /// 存储任务选中状态的字典。
         /// </summary>
@@ -122,9 +106,7 @@ namespace EFramework.Editor
         {
             taskArguments.Clear();
             taskGroups.Clear();
-            groupFoldouts.Clear();
             groupSelects.Clear();
-            taskFoldouts.Clear();
             taskSelects.Clear();
             taskOrders.Clear();
             foldoutAll = true;
@@ -275,11 +257,11 @@ namespace EFramework.Editor
                 foldoutAll = !foldoutAll;
                 foreach (var group in taskGroups)
                 {
-                    groupFoldouts[group[0].Group] = foldoutAll;
+                    EditorPrefs.SetBool(group[0].Group, foldoutAll);
                 }
                 foreach (var meta in XEditor.Tasks.Metas)
                 {
-                    taskFoldouts[meta] = foldoutAll;
+                    EditorPrefs.SetBool(meta.Name, foldoutAll);
                 }
             }
             GUILayout.EndVertical();
@@ -355,11 +337,10 @@ namespace EFramework.Editor
                         }
                     }
 
-                    var gfoldout = true;
+                    var gfoldout = EditorPrefs.GetBool(groupName, true);
                     var gfoldoutRect = EditorGUILayout.GetControlRect();
-                    if (groupFoldouts.ContainsKey(groupName)) gfoldout = groupFoldouts[groupName];
                     gfoldout = EditorGUI.Foldout(gfoldoutRect, gfoldout, new GUIContent(groupName, group[0].Tooltip));
-                    groupFoldouts[groupName] = gfoldout;
+                    EditorPrefs.SetBool(groupName, gfoldout);
 
                     GUILayout.FlexibleSpace();
                     EditorGUILayout.BeginVertical();
@@ -428,44 +409,47 @@ namespace EFramework.Editor
                                 GUILayout.BeginHorizontal();
                                 var idx = taskOrders.IndexOf(meta);
                                 var sidx = idx >= 0 ? $" #{idx + 1}" : "";
-                                var tfoldout = false;
+                                var tfoldout = EditorPrefs.GetBool(meta.Name, false);
                                 var tfoldoutRect = EditorGUILayout.GetControlRect();
-                                if (meta.Params != null && meta.Params.Count > 0 || meta.Worker != null && typeof(XEditor.Tasks.Panel.IOnGUI).IsAssignableFrom(meta.Worker))
-                                {
-                                    if (taskFoldouts.ContainsKey(meta)) tfoldout = taskFoldouts[meta];
-                                    tfoldout = EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, meta.Tooltip));
-                                    taskFoldouts[meta] = tfoldout;
-                                }
-                                else EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, meta.Tooltip));
+                                tfoldout = EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, meta.Tooltip));
+                                EditorPrefs.SetBool(meta.Name, tfoldout);
                                 GUILayout.FlexibleSpace();
 
-                                var reportFile = XFile.PathJoin(reportRoot, XEditor.Tasks.Workers[meta].ID.MD5());
-                                if (XFile.HasFile(reportFile))
+                                if (EditorPrefs.GetBool(meta.Name + "Loading", false))
                                 {
-                                    var reportJson = XFile.OpenText(reportFile);
-                                    var report = XObject.FromJson<XEditor.Tasks.Report>(reportJson);
-                                    if (report != null)
+                                    GUILayout.Button(EditorGUIUtility.IconContent("Loading@2x"), EditorStyles.iconButton);
+                                }
+                                else
+                                {
+                                    var reportFile = XFile.PathJoin(reportRoot, XEditor.Tasks.Workers[meta].ID.MD5());
+                                    if (XFile.HasFile(reportFile))
                                     {
-                                        var reportIcon = report.Result == XEditor.Tasks.Result.Failed ? "d_console.erroricon.sml@2x" :
-                                            report.Result == XEditor.Tasks.Result.Succeeded ? "d_console.infoicon.sml@2x" : "d_console.warnicon.sml@2x";
-                                        if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture(reportIcon), "Show Report."), EditorStyles.iconButton))
+                                        var reportJson = XFile.OpenText(reportFile);
+                                        var report = XObject.FromJson<XEditor.Tasks.Report>(reportJson);
+                                        if (report != null)
                                         {
-                                            reportBuilder.Clear();
-                                            var color = report.Result == XEditor.Tasks.Result.Failed ? "red" :
-                                                report.Result == XEditor.Tasks.Result.Succeeded ? "green" : "yellow";
-                                            reportBuilder.Append($"\"{XEditor.Tasks.Workers[meta].ID}\": ");
-                                            reportBuilder.Append(reportJson
-                                                .Replace("\"Result\": 2", "<color=red><b>\"Result\": 2</b></color>")
-                                                .Replace("\"Result\": 1", "<color=green><b>\"Result\": 1</b></color>")
-                                                .Replace("\"Result\": 0", "<color=yellow><b>\"Result\": 0</b></color>")
-                                                .Replace("\"Result\": 3", "<color=yellow><b>\"Result\": 3</b></color>"));
-                                            reportScroll = Vector2.zero;
+                                            var reportIcon = report.Result == XEditor.Tasks.Result.Failed ? "d_console.erroricon.sml@2x" :
+                                                report.Result == XEditor.Tasks.Result.Succeeded ? "d_console.infoicon.sml@2x" : "d_console.warnicon.sml@2x";
+                                            if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture(reportIcon), "Show Report."), EditorStyles.iconButton))
+                                            {
+                                                reportBuilder.Clear();
+                                                var color = report.Result == XEditor.Tasks.Result.Failed ? "red" :
+                                                    report.Result == XEditor.Tasks.Result.Succeeded ? "green" : "yellow";
+                                                reportBuilder.Append($"\"{XEditor.Tasks.Workers[meta].ID}\": ");
+                                                reportBuilder.Append(reportJson
+                                                    .Replace("\"Result\": 2", "<color=red><b>\"Result\": 2</b></color>")
+                                                    .Replace("\"Result\": 1", "<color=green><b>\"Result\": 1</b></color>")
+                                                    .Replace("\"Result\": 0", "<color=yellow><b>\"Result\": 0</b></color>")
+                                                    .Replace("\"Result\": 3", "<color=yellow><b>\"Result\": 3</b></color>"));
+                                                reportScroll = Vector2.zero;
+                                            }
                                         }
                                     }
                                 }
                                 if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture("d_PlayButton@2x"), "Execute task."), EditorStyles.iconButton) ||
                                 (tfoldoutRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.clickCount == 2))
                                 {
+                                    EditorPrefs.SetBool(meta.Name+"Loading", true);
                                     Event.current.Use();
                                     XLoom.RunInNext(() =>
                                     {
@@ -629,6 +613,7 @@ namespace EFramework.Editor
                     .Replace("\"Result\": 0", "<color=yellow><b>\"Result\": 0</b></color>")
                     .Replace("\"Result\": 3", "<color=yellow><b>\"Result\": 3</b></color>"));
                 reportScroll = Vector2.zero;
+                EditorPrefs.SetBool(meta.Name+"Loading", false);
             }
         }
     }

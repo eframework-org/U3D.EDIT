@@ -444,9 +444,11 @@ namespace EFramework.Editor
                         var sectionName = section[0].Section;
                         if (string.IsNullOrEmpty(sectionName)) continue;
                         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                        var foldout = true;
+                        var foldout = EditorPrefs.GetBool(sectionName,true);
+                        if (!section[0].Foldable) foldout = true;
                         if (foldouts.ContainsKey(sectionName)) foldout = foldouts[sectionName];
                         foldout = EditorGUILayout.Foldout(foldout, new GUIContent(sectionName, section[0].Tooltip));
+                        EditorPrefs.SetBool(sectionName, foldout);
                         if (section[0].Foldable) foldouts[sectionName] = foldout;
 
                         if (foldout)
