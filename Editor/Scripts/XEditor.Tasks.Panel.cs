@@ -63,7 +63,7 @@ namespace EFramework.Editor
                 [MenuItem(MenuPath)]
                 public static void Open()
                 {
-                    var name = Path.GetFileName(MenuPath).Split("#")[0].Trim();
+                    var name = Path.GetFileName(MenuPath);
                     var window = EditorWindow.GetWindow<TaskRunner>(name);
                     window.titleContent = new GUIContent(name, EditorGUIUtility.IconContent("d_PlayButton@2x").image);
                 }
