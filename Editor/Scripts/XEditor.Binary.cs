@@ -619,25 +619,29 @@ namespace EFramework.Editor
                     XEnv.Platform == XEnv.PlatformType.Linux ||
                     XEnv.Platform == XEnv.PlatformType.macOS)
                 {
-                    var dirs = Directory.GetDirectories(path);
                     var bin = "";
-                    foreach (var dir in dirs)
+                    if (XFile.HasFile(path)) bin = path;
+                    else
                     {
-                        if (dir.EndsWith("_Data"))
+                        var dirs = Directory.GetDirectories(path);
+                        foreach (var dir in dirs)
                         {
-                            bin = Path.GetFileName(dir).Replace("_Data", "");
+                            if (dir.EndsWith("_Data"))
+                            {
+                                bin = Path.GetFileName(dir).Replace("_Data", "");
+                            }
+                        }
+                        var files = Directory.GetFiles(path);
+                        foreach (var file in files)
+                        {
+                            if (Path.GetFileNameWithoutExtension(file) == bin)
+                            {
+                                bin = file;
+                                break;
+                            }
                         }
                     }
-                    var files = Directory.GetFiles(path);
-                    foreach (var file in files)
-                    {
-                        if (Path.GetFileNameWithoutExtension(file) == bin)
-                        {
-                            bin = file;
-                            break;
-                        }
-                    }
-                    if (XFile.HasFile(bin) == false)
+                    if (!XFile.HasFile(bin))
                     {
                         XLog.Error("XEditor.Binary.Run: cannot found executable file: {0}.", path);
                         return false;

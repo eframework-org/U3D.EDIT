@@ -10,6 +10,7 @@
 
 ### 修复
 - 修复 XEditor.Tasks 面板 Group 的 Tooltip 显示错误问题
+- 修复 XEditor.Binary 面板 Run 功能不支持 Windows 安装包的问题
 
 ## [0.1.3] - 2025-06-17
 ### 变更
