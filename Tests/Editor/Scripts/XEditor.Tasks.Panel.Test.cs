@@ -167,9 +167,7 @@ public class TestXEditorTasksPanel
         {
             // 添加一些初始数据
             panel.taskArguments[task1Meta] = new Dictionary<XEditor.Tasks.Param, string>();
-            panel.groupFoldouts["Test Group1"] = true;
             panel.groupSelects["Test Group1"] = true;
-            panel.taskFoldouts[task1Meta] = true;
             panel.taskSelects[task1Meta] = true;
             panel.taskOrders.Add(task1Meta);
 
@@ -179,9 +177,7 @@ public class TestXEditorTasksPanel
             // 验证数据结构重置
             // 验证数据清空
             Assert.That(panel.taskArguments, Is.Empty);
-            Assert.That(panel.groupFoldouts, Is.Empty);
             Assert.That(panel.groupSelects, Is.Empty);
-            Assert.That(panel.taskFoldouts, Is.Empty);
             Assert.That(panel.taskSelects, Is.Empty);
             Assert.That(panel.taskOrders, Is.Empty);
 
