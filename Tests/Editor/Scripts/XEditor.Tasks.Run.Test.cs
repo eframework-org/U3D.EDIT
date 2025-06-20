@@ -15,36 +15,7 @@ using EFramework.Utility;
 using EFramework.Editor;
 
 /// <summary>
-/// XEditor.Tasks.Run 模块的单元测试类
-/// 
-/// 功能特性
-/// 1. 任务执行系统测试
-///    - 同步/异步任务执行机制
-///    - 单例任务管理
-///    - 处理器回调时序
-///    - 错误处理机制
-/// 
-/// 2. 批处理系统测试
-///    - 命令行参数解析
-///    - 任务查找和执行
-///    - 参数读取优先级
-///    - 结果输出处理
-/// 
-/// 执行流程
-/// 1. 基础任务执行测试
-///    - 同步任务执行验证
-///    - 异步任务执行验证
-///    - 单例任务限制验证
-/// 
-/// 2. 处理器机制测试
-///    - 处理器执行时序验证
-///    - 错误处理和中断验证
-///    - 状态管理验证
-/// 
-/// 3. 批处理功能测试
-///    - 参数解析验证
-///    - 多任务执行验证
-///    - 结果输出验证
+/// XEditor.Tasks.Run 模块的单元测试类。
 /// </summary>
 public class TestXEditorTasksRun
 {
@@ -437,7 +408,8 @@ public class TestXEditorTasksRun
                     ID = $"Task/{XEnv.Platform}/{task1.ID}/Test Param@Editor"
                 } }
         };
-        XEditor.Tasks.Workers[task1Meta] = task1;
+        XEditor.Tasks.Metas[task1.ID] = task1Meta;
+        XEditor.Tasks.Workers[task1.ID] = task1;
 
         var task2 = new TestTask { ID = "Test/Test Task2", Runasync = true };
         var task2Meta = new XEditor.Tasks.WorkerAttribute("Test Task2", "Test", "Test Task 2")
@@ -447,7 +419,8 @@ public class TestXEditorTasksRun
                     ID = $"Task/{XEnv.Platform}/{task2.ID}/Test Param@Editor"
                 } }
         };
-        XEditor.Tasks.Workers[task2Meta] = task2;
+        XEditor.Tasks.Metas[task2.ID] = task2Meta;
+        XEditor.Tasks.Workers[task2.ID] = task2;
 
         var batchResultDir = XFile.PathJoin(XEnv.ProjectPath, "Temp", "TestXEditorTasksRun");
         if (!XFile.HasDirectory(batchResultDir)) XFile.CreateDirectory(batchResultDir);
@@ -632,8 +605,10 @@ public class TestXEditorTasksRun
         finally
         {
             // 清理测试环境
-            if (XEditor.Tasks.Workers.ContainsKey(task1Meta)) XEditor.Tasks.Workers.Remove(task1Meta);
-            if (XEditor.Tasks.Workers.ContainsKey(task2Meta)) XEditor.Tasks.Workers.Remove(task2Meta);
+            if (XEditor.Tasks.Metas.ContainsKey(task1.ID)) XEditor.Tasks.Metas.Remove(task1.ID);
+            if (XEditor.Tasks.Workers.ContainsKey(task1.ID)) XEditor.Tasks.Workers.Remove(task1.ID);
+            if (XEditor.Tasks.Metas.ContainsKey(task2.ID)) XEditor.Tasks.Metas.Remove(task2.ID);
+            if (XEditor.Tasks.Workers.ContainsKey(task2.ID)) XEditor.Tasks.Workers.Remove(task2.ID);
             if (XFile.HasFile(batchReport)) XFile.DeleteFile(batchReport);
             if (XFile.HasDirectory(batchResultDir)) XFile.DeleteDirectory(batchResultDir);
 

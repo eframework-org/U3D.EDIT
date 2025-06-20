@@ -1,6 +1,11 @@
 # 更新记录
 
 ## [0.1.4] - 
+### 变更
+- 优化 Task Runner 面板状态的持久化功能，提升用户体验
+- 重构 XEditor.Tasks 模块的 Metas 和 Workers 的数据维护方式
+- 整理 XEditor.Tasks 模块的单元测试及代码注释
+
 ### 修复
 - 修复 XEditor.Tasks 面板 Group 的 Tooltip 显示错误问题
 

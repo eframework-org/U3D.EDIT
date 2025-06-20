@@ -212,60 +212,53 @@ namespace EFramework.Editor
         public partial class Tasks
         {
             /// <summary>
-            /// 正在执行的单例任务列表。
+            /// Singletons 是正在执行的单例任务列表。
             /// </summary>
             internal static List<string> Singletons = new();
 
             /// <summary>
-            /// 任务元数据列表。
+            /// Metas 是任务元数据字典，key 为任务标识，value 为任务元数据实例。
             /// </summary>
-            internal static readonly List<WorkerAttribute> Metas = new();
+            internal static readonly Dictionary<string, WorkerAttribute> Metas = new();
 
             /// <summary>
-            /// 任务工作者字典，key 为任务元数据，value 为任务工作者实例。
+            /// Workers 是任务工作者字典，key 为任务标识，value 为任务工作者实例。
             /// </summary>
-            internal static readonly Dictionary<WorkerAttribute, IWorker> Workers = new();
+            internal static readonly Dictionary<string, IWorker> Workers = new();
 
             /// <summary>
-            /// 任务参数特性，用于定义任务的参数信息。
+            /// Param 是任务参数特性，用于定义任务的参数信息。
             /// </summary>
-            /// <remarks>
-            /// 使用此特性可以为任务定义参数，支持：
-            /// - 参数名称和描述
-            /// - 默认值设置
-            /// - 持久化配置
-            /// - 平台限制
-            /// </remarks>
             [AttributeUsage(AttributeTargets.Class | AttributeTargets.Field, AllowMultiple = true)]
             public class Param : Attribute
             {
                 /// <summary>
-                /// 参数标识。
+                /// ID 是参数的标识。
                 /// </summary>
                 public string ID { get; internal set; }
 
                 /// <summary>
-                /// 参数名称。
+                /// Name 是参数的名称。
                 /// </summary>
                 public string Name { get; internal set; }
 
                 /// <summary>
-                /// 参数提示信息。
+                /// Tooltip 是参数的提示信息。
                 /// </summary>
                 public string Tooltip { get; internal set; }
 
                 /// <summary>
-                /// 参数默认值。
+                /// Default 是参数的默认值。
                 /// </summary>
                 public string Default { get; internal set; }
 
                 /// <summary>
-                /// 是否持久化参数。
+                /// Persist 表示是否持久化参数。
                 /// </summary>
                 public bool Persist { get; internal set; }
 
                 /// <summary>
-                /// 参数适用的平台类型。
+                /// Platform 是参数适用的平台类型。
                 /// </summary>
                 public XEnv.PlatformType Platform { get; internal set; }
 
@@ -288,7 +281,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 任务执行结果状态。
+            /// Result 是任务执行结果状态。
             /// </summary>
             public enum Result
             {
@@ -314,82 +307,75 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 任务执行阶段，记录任务执行的各个步骤信息。
+            /// Phase 是任务执行阶段，记录任务执行的各个步骤信息。
             /// </summary>
             public class Phase
             {
                 /// <summary>
-                /// 阶段名称。
+                /// Name 是阶段的名称。
                 /// </summary>
                 public string Name { get; set; }
 
                 /// <summary>
-                /// 错误信息。
+                /// error 表示错误信息。
                 /// </summary>
                 [XObject.Json.Exclude] internal string error;
 
                 /// <summary>
-                /// 格式化的错误信息，包含阶段名称。
+                /// Error 是格式化的错误信息，包含阶段名称。
                 /// </summary>
                 public string Error { get => string.IsNullOrEmpty(error) ? error : $"{Name}: {error}"; set => error = value; }
 
                 /// <summary>
-                /// 阶段执行结果。
+                /// Result 是阶段执行的结果。
                 /// </summary>
                 public Result Result { get; set; }
 
                 /// <summary>
-                /// 阶段执行耗时（秒）。
+                /// Elapsed 是阶段执行的耗时，单位：秒。
                 /// </summary>
                 public int Elapsed { get; set; }
             }
 
             /// <summary>
-            /// 任务执行报告，记录任务执行的完整信息。
+            /// Report 是任务执行报告，记录任务执行的完整信息。
             /// </summary>
-            /// <remarks>
-            /// 包含以下信息：
-            /// - 任务参数和状态
-            /// - 执行阶段和结果
-            /// - 错误信息和耗时
-            /// - 异步执行支持
-            /// </remarks>
             public class Report : IAsyncResult
             {
                 #region Sync/Async Task
                 /// <summary>
-                /// 异步任务对象。
+                /// Task 是异步任务对象。
                 /// </summary>
                 [XObject.Json.Exclude] public Task Task;
 
                 /// <summary>
-                /// 异步状态对象。
+                /// AsyncState 是异步状态对象。
                 /// </summary>
                 [XObject.Json.Exclude] public object AsyncState => (Task as IAsyncResult).AsyncState;
 
                 /// <summary>
-                /// 异步等待句柄。
+                /// AsyncWaitHandle 是异步等待句柄。
                 /// </summary>
                 [XObject.Json.Exclude] public WaitHandle AsyncWaitHandle => (Task as IAsyncResult).AsyncWaitHandle;
 
                 /// <summary>
-                /// 是否同步完成。
+                /// CompletedSynchronously 是否同步完成。
                 /// </summary>
                 [XObject.Json.Exclude] public bool CompletedSynchronously => (Task as IAsyncResult).CompletedSynchronously;
 
                 /// <summary>
-                /// 是否已完成。
+                /// IsCompleted 表示是否已完成。
                 /// </summary>
                 [XObject.Json.Exclude] public bool IsCompleted => (Task as IAsyncResult).IsCompleted;
                 #endregion
 
                 /// <summary>
-                /// 任务参数字典。
+                /// Arguments 是任务参数的字典。
                 /// </summary>
                 public Dictionary<string, string> Arguments { get; internal set; } = new();
 
                 /// <summary>
-                /// 当前执行阶段。
+                /// Current 是当前执行的阶段。
                 /// </summary>
                 [XObject.Json.Exclude]
                 public Phase Current
@@ -413,7 +399,7 @@ namespace EFramework.Editor
                 }
 
                 /// <summary>
-                /// 任务执行过程中的错误信息。
+                /// Error 表示任务执行过程中的错误信息。
                 /// </summary>
                 [XObject.Json.Exclude]
                 public string Error
@@ -432,7 +418,7 @@ namespace EFramework.Editor
                 }
 
                 /// <summary>
-                /// 任务执行结果。
+                /// Result 是任务执行结果。
                 /// </summary>
                 public Result Result
                 {
@@ -452,7 +438,7 @@ namespace EFramework.Editor
                 }
 
                 /// <summary>
-                /// 任务总执行时间（秒）。
+                /// Elapsed 是任务总执行时间（秒）。
                 /// </summary>
                 public int Elapsed
                 {
@@ -466,234 +452,196 @@ namespace EFramework.Editor
                 }
 
                 /// <summary>
-                /// 任务执行阶段列表。
+                /// Phases 是任务执行阶段列表。
                 /// </summary>
                 [XObject.Json.Exclude] internal List<Phase> phases = new();
                 public List<Phase> Phases { get => phases; set => phases = value; }
 
                 /// <summary>
-                /// 任务额外数据信息。
+                /// Extras 是任务额外数据信息。
                 /// </summary>
                 public object Extras;
             }
 
             /// <summary>
-            /// 任务预处理特性，用于定义任务执行前的处理器。
+            /// Pre 是任务预处理特性，用于定义任务执行前的处理器。
             /// </summary>
-            /// <remarks>
-            /// 预处理器在任务执行前被调用，可以：
-            /// - 验证执行环境
-            /// - 准备必要资源
-            /// - 初始化任务状态
-            /// </remarks>
             [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
             public class Pre : Attribute
             {
                 /// <summary>
-                /// 预处理器类型。
+                /// Handler 为预处理器类型。
                 /// </summary>
                 public Type Handler;
 
-                /// <summary>
-                /// 初始化预处理特性。
-                /// </summary>
-                /// <param name="handler">预处理器类型</param>
                 public Pre(Type handler) { Handler = handler ?? throw new ArgumentNullException("handler"); }
             }
 
             /// <summary>
-            /// 任务后处理特性，用于定义任务执行后的处理器。
+            /// Post 是任务后处理特性，用于定义任务执行后的处理器。
             /// </summary>
-            /// <remarks>
-            /// 后处理器在任务执行后被调用，可以：
-            /// - 清理资源
-            /// - 更新状态
-            /// - 触发后续操作
-            /// </remarks>
             [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
             public class Post : Attribute
             {
                 /// <summary>
-                /// 后处理器类型。
+                /// Handler 为后处理器类型。
                 /// </summary>
                 public Type Handler;
 
-                /// <summary>
-                /// 初始化后处理特性。
-                /// </summary>
-                /// <param name="handler">后处理器类型</param>
                 public Post(Type handler) { Handler = handler ?? throw new ArgumentNullException("handler"); }
             }
 
             /// <summary>
-            /// 任务工作者接口，定义任务的基本行为。
+            /// IWorker 是任务工作者接口，定义任务的基本行为。
             /// </summary>
-            /// <remarks>
-            /// 实现此接口的类需要提供：
-            /// - 任务标识和配置
-            /// - 执行流程实现
-            /// - 状态管理方法
-            /// </remarks>
             public interface IWorker
             {
                 /// <summary>
-                /// 任务标识。
+                /// ID 是任务的标识。
                 /// </summary>
                 string ID { get; set; }
 
                 /// <summary>
-                /// 是否为单例任务。
+                /// Singleton 表示是否为单例任务。
                 /// </summary>
                 bool Singleton { get; set; }
 
                 /// <summary>
-                /// 是否异步执行。
+                /// Runasync 表示是否异步执行。
                 /// </summary>
                 bool Runasync { get; set; }
 
                 /// <summary>
-                /// 是否在批处理模式下执行。
+                /// Batchmode 表示是否在批处理模式下执行。
                 /// </summary>
                 bool Batchmode { get; set; }
 
                 /// <summary>
-                /// 任务优先级。
+                /// Priority 是任务的优先级。
                 /// </summary>
                 int Priority { get; set; }
 
                 /// <summary>
-                /// 任务预处理。
+                /// Preprocess 是任务的预处理函数。
                 /// </summary>
                 /// <param name="report">任务报告</param>
                 void Preprocess(Report report);
 
                 /// <summary>
-                /// 任务处理。
+                /// Process 是任务的处理函数。
                 /// </summary>
                 /// <param name="report">任务报告</param>
                 void Process(Report report);
 
                 /// <summary>
-                /// 任务后处理。
+                /// Postprocess 是任务的后处理函数。
                 /// </summary>
                 /// <param name="report">任务报告</param>
                 void Postprocess(Report report);
             }
 
             /// <summary>
-            /// 任务工作者基类，提供任务基本行为的默认实现。
+            /// Worker 是任务工作者的基类，提供任务基本行为的默认实现。
             /// </summary>
-            /// <remarks>
-            /// 继承此类可以：
-            /// - 快速创建新任务
-            /// - 复用通用实现
-            /// - 专注业务逻辑
-            /// </remarks>
             public class Worker : IWorker
             {
                 /// <summary>
-                /// 任务标识。
+                /// ID 是任务的标识。
                 /// </summary>
                 public virtual string ID { get; set; }
 
                 /// <summary>
-                /// 是否为单例任务，默认为 true。
+                /// Singleton 表示是否为单例任务，默认为 true。
                 /// </summary>
                 public virtual bool Singleton { get; set; } = true;
 
                 /// <summary>
-                /// 是否异步执行，默认为 false。
+                /// Runasync 表示是否异步执行，默认为 false。
                 /// </summary>
                 public virtual bool Runasync { get; set; } = false;
 
                 /// <summary>
-                /// 是否在批处理模式下执行，默认为 false。
+                /// Batchmode 表示是否在批处理模式下执行，默认为 false。
                 /// </summary>
                 public virtual bool Batchmode { get; set; } = false;
 
                 /// <summary>
-                /// 任务优先级，默认为 0。
+                /// Priority 是任务的优先级，默认为 0。
                 /// </summary>
                 public virtual int Priority { get; set; } = 0;
 
                 /// <summary>
-                /// 任务预处理，默认为空实现。
+                /// Preprocess 是任务的预处理函数，默认为空实现。
                 /// </summary>
                 /// <param name="report">任务报告</param>
                 public virtual void Preprocess(Report report) { }
 
                 /// <summary>
-                /// 任务处理，默认为空实现。
+                /// Process 是任务的处理函数，默认为空实现。
                 /// </summary>
                 /// <param name="report">任务报告</param>
                 public virtual void Process(Report report) { }
 
                 /// <summary>
-                /// 任务后处理，默认为空实现。
+                /// Postprocess 是任务的后处理函数，默认为空实现。
                 /// </summary>
                 /// <param name="report">任务报告</param>
                 public virtual void Postprocess(Report report) { }
             }
 
             /// <summary>
-            /// 任务特性，用于定义任务的基本信息。
+            /// WorkerAttribute 是任务特性，用于定义任务的基本信息。
             /// </summary>
-            /// <remarks>
-            /// 使用此特性可以定义：
-            /// - 任务的名称和分组
-            /// - 执行方式和优先级
-            /// - 平台限制和参数配置
-            /// </remarks>
             [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
             public class WorkerAttribute : Attribute
             {
                 /// <summary>
-                /// 任务名称。
+                /// Name 是任务的名称。
                 /// </summary>
                 public string Name;
 
                 /// <summary>
-                /// 任务组名称。
+                /// Group 是任务组的名称。
                 /// </summary>
                 public string Group;
 
                 /// <summary>
-                /// 任务提示信息。
+                /// Tooltip 是任务的提示信息。
                 /// </summary>
                 public string Tooltip;
 
                 /// <summary>
-                /// 任务优先级。
+                /// Priority 是任务的优先级。
                 /// </summary>
                 public int Priority;
 
                 /// <summary>
-                /// 是否为单例任务。
+                /// Singleton 表示是否为单例任务。
                 /// </summary>
                 public bool Singleton;
 
                 /// <summary>
-                /// 是否异步执行。
+                /// Runasync 表示是否异步执行。
                 /// </summary>
                 public bool Runasync;
 
                 /// <summary>
-                /// 任务适用的平台类型。
+                /// Platform 是任务适用的平台类型。
                 /// </summary>
                 public XEnv.PlatformType Platform;
 
                 /// <summary>
-                /// 任务工作者类型。
+                /// Worker 是任务工作者的类型。
                 /// </summary>
                 public Type Worker;
 
                 /// <summary>
-                /// 任务参数列表。
+                /// Params 是任务参数列表。
                 /// </summary>
                 public List<Param> Params;
 
                 /// <summary>
-                /// 是否单元测试任务。
+                /// Test 表示是否为单元测试任务。
                 /// </summary>
                 internal bool Test;
 

@@ -19,44 +19,13 @@ namespace EFramework.Editor
         public partial class Tasks
         {
             /// <summary>
-            /// 执行指定的任务。
+            /// Execute 执行指定的任务。
             /// </summary>
             /// <param name="worker">任务工作者实例</param>
             /// <param name="arguments">任务参数字典</param>
             /// <returns>任务执行报告</returns>
             /// <exception cref="ArgumentNullException">当 worker 为 null 时抛出</exception>
             /// <exception cref="Exception">当任务为单例且已在执行时抛出</exception>
-            /// <remarks>
-            /// <code>
-            /// 执行流程：
-            /// 1. 参数验证和准备
-            ///    - 检查任务实例有效性
-            ///    - 处理单例任务限制
-            ///    - 准备执行环境
-            /// 
-            /// 2. 任务执行阶段
-            ///    - 预处理（Preprocess）
-            ///    - 处理前置任务（Pre handlers）
-            ///    - 主处理过程（Process）
-            ///    - 处理后置任务（Post handlers）
-            ///    - 后处理（Postprocess）
-            /// 
-            /// 3. 状态管理
-            ///    - 记录执行时间
-            ///    - 更新执行状态
-            ///    - 处理异常情况
-            /// 
-            /// 使用示例：
-            ///     var worker = new MyTask();
-            ///     var args = new Dictionary<string, string> {
-            ///         { "param1", "value1" }
-            ///     };
-            ///     var report = Execute(worker, args);
-            ///     if (report.Result == Result.Succeeded) {
-            ///         // 处理成功
-            ///     }
-            /// </code>
-            /// </remarks>
             public static Report Execute(IWorker worker, Dictionary<string, string> arguments = null)
             {
                 if (worker == null) throw new ArgumentNullException("worker");
@@ -253,28 +222,12 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 准备任务执行环境。
+            /// Prepare 准备任务执行环境。
             /// </summary>
             /// <param name="worker">任务工作者实例</param>
             /// <param name="arguments">任务参数字典，如果为 null 则创建新字典</param>
             /// <param name="report">输出的任务报告</param>
             /// <returns>是否准备成功</returns>
-            /// <remarks>
-            /// <code>
-            /// 准备步骤：
-            /// 1. 创建任务报告
-            /// 2. 初始化参数字典
-            /// 3. 处理字段参数
-            ///    - 读取字段特性
-            ///    - 设置参数值
-            ///    - 处理默认值
-            /// 
-            /// 参数处理规则：
-            /// 1. 优先使用传入的参数值
-            /// 2. 如果参数未提供，使用默认值
-            /// 3. 记录参数设置错误
-            /// </code>
-            /// </remarks>
             internal static bool Prepare(IWorker worker, ref Dictionary<string, string> arguments, out Report report)
             {
                 report = new Report { Current = new Phase { Name = $"{worker.ID}/Prepare" } };
@@ -315,28 +268,13 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 处理任务的预处理或后处理。
+            /// Handle 处理任务的预处理或后处理。
             /// </summary>
             /// <param name="type">处理器类型</param>
             /// <param name="worker">任务工作者实例</param>
             /// <param name="report">任务报告</param>
             /// <returns>是否处理成功</returns>
             /// <exception cref="ArgumentNullException">当任何参数为 null 时抛出</exception>
-            /// <remarks>
-            /// <code>
-            /// 处理流程：
-            /// 1. 参数验证
-            /// 2. 执行处理器
-            /// 3. 记录执行时间
-            /// 4. 更新执行状态
-            /// 5. 处理异常情况
-            /// 
-            /// 状态处理：
-            /// - Unknown：初始状态
-            /// - Succeeded：执行成功且无错误
-            /// - Failed：执行失败或有错误
-            /// </code>
-            /// </remarks>
             internal static bool Handle(Type type, IWorker worker, Report report)
             {
                 if (type == null) throw new ArgumentNullException("type");
@@ -366,71 +304,25 @@ namespace EFramework.Editor
         public partial class Tasks
         {
             /// <summary>
-            /// 批量任务执行器，支持命令行批处理模式。
+            /// Batch 是批量任务的执行器，支持命令行批处理模式。
             /// </summary>
-            /// <remarks>
-            /// <code>
-            /// 功能特性
-            /// - 支持多任务批量执行
-            /// - 提供命令行参数解析
-            /// - 支持任务参数配置
-            /// - 处理执行结果报告
-            /// 
-            /// 命令行参数
-            /// - runTasks：启用批处理模式
-            /// - taskID：指定任务标识
-            /// - runAsync：设置异步执行
-            /// - taskResults：结果文件路径
-            /// 
-            /// 使用示例
-            /// Unity.exe -batchmode -projectPath /path/to/project 
-            ///          -runTasks 
-            ///          -taskID "MyTask" 
-            ///          -param1 "value1" 
-            ///          -taskResults "results.json"
-            /// </code>
-            /// </remarks>
             internal class Batch : Event.Internal.OnEditorLoad
             {
                 /// <summary>
-                /// 事件处理优先级。
+                /// Priority 是事件处理的优先级。
                 /// </summary>
                 int Event.Callback.Priority => 10000;
 
                 /// <summary>
-                /// 是否为单例事件处理器。
+                /// Singleton 表示是否为单例事件处理器。
                 /// </summary>
                 bool Event.Callback.Singleton => true;
 
                 async void Event.Internal.OnEditorLoad.Process(params object[] _) { await Process(); }
 
                 /// <summary>
-                /// 处理批量任务执行。
+                /// Process 处理批量任务执行。
                 /// </summary>
-                /// <remarks>
-                /// <code>
-                /// 执行流程：
-                /// 1. 参数解析
-                ///    - 检查批处理模式
-                ///    - 解析任务参数
-                ///    - 处理执行选项
-                /// 
-                /// 2. 任务准备
-                ///    - 查找任务实例
-                ///    - 配置执行参数
-                ///    - 验证任务有效性
-                /// 
-                /// 3. 任务执行
-                ///    - 按序执行任务
-                ///    - 收集执行报告
-                ///    - 等待任务完成
-                /// 
-                /// 4. 结果处理
-                ///    - 保存执行报告
-                ///    - 处理执行异常
-                ///    - 设置退出代码
-                /// </code>
-                /// </remarks>
                 internal async Task Process()
                 {
                     var tasks = new List<string>();
@@ -497,7 +389,7 @@ namespace EFramework.Editor
                             var sig = false;
                             foreach (var kvp in Workers)
                             {
-                                var meta = kvp.Key;
+                                var meta = Metas[kvp.Key];
                                 var worker = kvp.Value;
                                 if (worker.ID == task)
                                 {

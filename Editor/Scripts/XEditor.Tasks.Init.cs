@@ -17,52 +17,38 @@ namespace EFramework.Editor
         public partial class Tasks
         {
             /// <summary>
-            /// 任务系统初始化器，负责在编辑器加载时解析和初始化任务配置。
+            /// Init 是任务系统的初始化器，负责在编辑器加载时解析和初始化任务配置。
             /// </summary>
             internal class Init : Event.Internal.OnEditorLoad
             {
                 /// <summary>
-                /// 事件处理优先级，设为 -1 确保在其他处理器之前执行。
+                /// Priority 是事件处理优先级，设为 -1 确保在其他处理器之前执行。
                 /// </summary>
                 int Event.Callback.Priority => -1;
 
                 /// <summary>
-                /// 是否为单例事件处理器，确保只有一个实例在运行。
+                /// Singleton 表示是否为单例事件处理器，确保只有一个实例在运行。
                 /// </summary>
                 bool Event.Callback.Singleton => true;
 
                 /// <summary>
-                /// 初始化任务系统，在 Unity 编辑器加载时调用。
+                /// Process 初始化任务系统，在 Unity 编辑器加载时调用。
                 /// </summary>
                 /// <param name="_">未使用的参数数组</param>
                 void Event.Internal.OnEditorLoad.Process(params object[] _) { Parse(); }
 
                 /// <summary>
-                /// 使用默认配置解析任务系统。
+                /// Parse 使用默认配置解析任务系统。
                 /// </summary>
-                /// <remarks>
-                /// 默认配置：
-                /// - test = false：非测试模式
-                /// - parseClass = true：解析类型定义
-                /// - packageFile：使用项目根目录的 package.json
-                /// </remarks>
                 internal static void Parse() { Parse(false, true, XFile.PathJoin(XEnv.ProjectPath, "package.json")); }
 
                 /// <summary>
-                /// 使用指定配置解析任务系统。
+                /// Parse 使用指定配置解析任务系统。
                 /// </summary>
                 /// <param name="test">是否为测试模式</param>
-                /// <param name="parseClass">是否解析类型定义</param>
+                /// <param name="attribute">是否解析特性定义</param>
                 /// <param name="packageFile">package.json 文件路径</param>
-                /// <remarks>
-                /// 执行步骤：
-                /// 1. 清理现有任务数据
-                /// 2. 解析 package.json 配置
-                /// 3. 扫描并注册任务类型
-                /// 4. 排序任务元数据
-                /// 5. 设置配置监控
-                /// </remarks>
-                internal static void Parse(bool test = false, bool parseClass = false, string packageFile = "")
+                internal static void Parse(bool test = false, bool attribute = false, string packageFile = "")
                 {
                     Singletons.Clear();
                     Metas.Clear();
@@ -82,7 +68,7 @@ namespace EFramework.Editor
                                 {
                                     var exists = false;
                                     packageMd5 = md5;
-                                    var deletes = new List<WorkerAttribute>();
+                                    var deletes = new List<string>();
                                     foreach (var kvp in Workers)
                                     {
                                         if (kvp.Value is Npm)
@@ -167,8 +153,8 @@ namespace EFramework.Editor
                                             }
                                             task.Worker = worker.GetType();
 
-                                            Metas.Add(task);
-                                            Workers.Add(task, worker);
+                                            Metas.Add(worker.ID, task);
+                                            Workers.Add(worker.ID, worker);
                                             count++;
                                         }
 
@@ -233,8 +219,8 @@ namespace EFramework.Editor
                                         };
                                         meta.Params.Add(nparam);
                                     }
-                                    Metas.Add(meta);
-                                    Workers.Add(meta, worker);
+                                    Metas.Add(worker.ID, meta);
+                                    Workers.Add(worker.ID, worker);
                                     count++;
                                 }
                                 catch (Exception e) { XLog.Panic(e, meta.Name); }
@@ -244,21 +230,13 @@ namespace EFramework.Editor
                         if (count > 0) XLog.Debug("XEditor.Tasks.Init: parsed {0} task(s) from attribute.", count);
                     }
 
-                    // 根据优先级对任务元数据进行排序
-                    void sortMetas() => Metas.Sort((e1, e2) => e1.Priority.CompareTo(e2.Priority));
-
                     if (XFile.HasFile(packageFile)) parsePackage();
-                    if (parseClass) parseAttribute();
-                    sortMetas();
+                    if (attribute) parseAttribute();
                     Panel.Reset();
 
                     if (XFile.HasFile(packageFile)) XLoom.SetInterval(() =>
                     {
-                        if (parsePackage())
-                        {
-                            sortMetas();
-                            Panel.Reset();
-                        }
+                        if (parsePackage()) Panel.Reset();
                     }, 1000);
                 }
             }

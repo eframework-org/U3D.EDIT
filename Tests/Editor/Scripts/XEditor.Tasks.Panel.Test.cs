@@ -130,84 +130,52 @@ public class TestXEditorTasksPanel
     /// <summary>
     /// 测试面板重置功能。
     /// </summary>
-    /// <remarks>
-    /// 测试内容：
-    /// 1. 数据结构重置
-    ///    - 验证所有集合正确清空
-    ///    - 验证默认状态正确设置
-    /// 
-    /// 2. 任务分组重组织
-    ///    - 验证分组正确创建
-    ///    - 验证组内任务排序
-    ///    - 验证分组间排序
-    /// 
-    /// 3. 状态一致性
-    ///    - 验证面板状态标记
-    ///    - 验证任务状态对应
-    /// </remarks>
     [Test]
     public void Sort()
     {
         // 准备测试任务
         var task1 = new TestVisualTask { ID = "Test Group1/Test Visual Task1", Priority = 1 };
         var task1Meta = new XEditor.Tasks.WorkerAttribute("Test Visual Task1", "Test Group1", "Test Visual Task 1");
-        XEditor.Tasks.Workers[task1Meta] = task1;
+        XEditor.Tasks.Metas[task1.ID] = task1Meta;
+        XEditor.Tasks.Workers[task1.ID] = task1;
 
         var task2 = new TestVisualTask { ID = "Test Group2/Test Visual Task2", Priority = 0 };
         var task2Meta = new XEditor.Tasks.WorkerAttribute("Test Visual Task2", "Test Group2", "Test Visual Task 2");
-        XEditor.Tasks.Workers[task2Meta] = task2;
+        XEditor.Tasks.Metas[task2.ID] = task2Meta;
+        XEditor.Tasks.Workers[task2.ID] = task2;
 
         var task3 = new TestVisualTask { ID = "Test Group2/Test Visual Task3", Priority = 2 };
         var task3Meta = new XEditor.Tasks.WorkerAttribute("Test Visual Task3", "Test Group2", "Test Visual Task 3");
-        XEditor.Tasks.Workers[task3Meta] = task3;
+        XEditor.Tasks.Metas[task3.ID] = task3Meta;
+        XEditor.Tasks.Workers[task3.ID] = task3;
 
         var panel = ScriptableObject.CreateInstance<TaskRunner>();
 
         try
         {
-            // 添加一些初始数据
-            panel.taskArguments[task1Meta] = new Dictionary<XEditor.Tasks.Param, string>();
-            panel.groupFoldouts["Test Group1"] = true;
-            panel.groupSelects["Test Group1"] = true;
-            panel.taskFoldouts[task1Meta] = true;
-            panel.taskSelects[task1Meta] = true;
-            panel.taskOrders.Add(task1Meta);
-
-            // 执行重置
-            panel.OnEnable();
-
-            // 验证数据结构重置
-            // 验证数据清空
-            Assert.That(panel.taskArguments, Is.Empty);
-            Assert.That(panel.groupFoldouts, Is.Empty);
-            Assert.That(panel.groupSelects, Is.Empty);
-            Assert.That(panel.taskFoldouts, Is.Empty);
-            Assert.That(panel.taskSelects, Is.Empty);
-            Assert.That(panel.taskOrders, Is.Empty);
-
             // 执行重置
             panel.OnEnable();
 
             // 验证任务分组
-            var group1 = panel.taskGroups.FirstOrDefault(g => g[0].Group == "Test Group1");
-            var group2 = panel.taskGroups.FirstOrDefault(g => g[0].Group == "Test Group2");
+            var group1 = panel.taskGroups.FirstOrDefault(g => g[0].StartsWith("Test Group1"));
+            var group2 = panel.taskGroups.FirstOrDefault(g => g[0].StartsWith("Test Group2"));
 
             // 验证分组存在
             Assert.That(group1, Is.Not.Null);
             Assert.That(group2, Is.Not.Null);
 
             // 比较Group1和Group2的优先级
-            Assert.That(panel.taskGroups.FindIndex(g => g[0].Group == "Test Group1"), Is.GreaterThan(panel.taskGroups.FindIndex(g => g[0].Group == "Test Group2")));
+            Assert.That(panel.taskGroups.FindIndex(g => g[0].StartsWith("Test Group1")), Is.GreaterThan(panel.taskGroups.FindIndex(g => g[0].StartsWith("Test Group2"))));
 
             // 验证Group1中的任务
             Assert.That(group1.Count, Is.EqualTo(1));
             Assert.That(XEditor.Tasks.Workers[group1[0]].Priority, Is.EqualTo(1));
-            Assert.That(group1[0].Name, Is.EqualTo("Test Visual Task1"));
+            Assert.That(group1[0], Is.EqualTo("Test Group1/Test Visual Task1"));
 
             // 验证Group2中的任务优先级排序
             Assert.That(group2.Count, Is.EqualTo(2));
-            Assert.That(group2[0].Name, Is.EqualTo("Test Visual Task2"));
-            Assert.That(group2[1].Name, Is.EqualTo("Test Visual Task3"));
+            Assert.That(group2[0], Is.EqualTo("Test Group2/Test Visual Task2"));
+            Assert.That(group2[1], Is.EqualTo("Test Group2/Test Visual Task3"));
             Assert.That(XEditor.Tasks.Workers[group2[0]].Priority, Is.EqualTo(0));
             Assert.That(XEditor.Tasks.Workers[group2[1]].Priority, Is.EqualTo(2));
 
@@ -218,9 +186,12 @@ public class TestXEditorTasksPanel
         finally
         {
             // 清理测试环境
-            if (XEditor.Tasks.Workers.ContainsKey(task1Meta)) XEditor.Tasks.Workers.Remove(task1Meta);
-            if (XEditor.Tasks.Workers.ContainsKey(task2Meta)) XEditor.Tasks.Workers.Remove(task2Meta);
-            if (XEditor.Tasks.Workers.ContainsKey(task3Meta)) XEditor.Tasks.Workers.Remove(task3Meta);
+            if (XEditor.Tasks.Metas.ContainsKey(task1.ID)) XEditor.Tasks.Metas.Remove(task1.ID);
+            if (XEditor.Tasks.Workers.ContainsKey(task1.ID)) XEditor.Tasks.Workers.Remove(task1.ID);
+            if (XEditor.Tasks.Metas.ContainsKey(task2.ID)) XEditor.Tasks.Metas.Remove(task2.ID);
+            if (XEditor.Tasks.Workers.ContainsKey(task2.ID)) XEditor.Tasks.Workers.Remove(task2.ID);
+            if (XEditor.Tasks.Metas.ContainsKey(task3.ID)) XEditor.Tasks.Metas.Remove(task3.ID);
+            if (XEditor.Tasks.Workers.ContainsKey(task3.ID)) XEditor.Tasks.Workers.Remove(task3.ID);
 
             // 恢复面板状态
             Object.DestroyImmediate(panel);
@@ -231,20 +202,6 @@ public class TestXEditorTasksPanel
     /// <summary>
     /// 测试面板生命周期。
     /// </summary>
-    /// <remarks>
-    /// 测试内容：
-    /// 1. OnEnable 处理
-    ///    - 验证实例正确设置
-    ///    - 验证回调正确触发
-    /// 
-    /// 2. OnDisable 处理
-    ///    - 验证任务正确通知
-    ///    - 验证状态正确保存
-    /// 
-    /// 3. OnDestroy 处理
-    ///    - 验证资源正确清理
-    ///    - 验证实例正确销毁
-    /// </remarks>
     [Test]
     public void Panel()
     {
@@ -254,7 +211,8 @@ public class TestXEditorTasksPanel
         // 准备测试任务
         var task = new TestVisualTask { ID = "Test/Test Visual Task" };
         var taskMeta = new XEditor.Tasks.WorkerAttribute("Test Visual Task", "Test", "Test Visual Task");
-        XEditor.Tasks.Workers[taskMeta] = task;
+        XEditor.Tasks.Metas[task.ID] = taskMeta;
+        XEditor.Tasks.Workers[task.ID] = task;
 
         var panel = ScriptableObject.CreateInstance<TaskRunner>();
 
@@ -275,7 +233,8 @@ public class TestXEditorTasksPanel
         finally
         {
             // 清理测试环境
-            if (XEditor.Tasks.Workers.ContainsKey(taskMeta)) XEditor.Tasks.Workers.Remove(taskMeta);
+            if (XEditor.Tasks.Metas.ContainsKey(task.ID)) XEditor.Tasks.Metas.Remove(task.ID);
+            if (XEditor.Tasks.Workers.ContainsKey(task.ID)) XEditor.Tasks.Workers.Remove(task.ID);
 
             // 恢复面板状态
             Object.DestroyImmediate(panel);
@@ -286,31 +245,10 @@ public class TestXEditorTasksPanel
     /// <summary>
     /// 测试任务执行功能。
     /// </summary>
-    /// <remarks>
-    /// 测试内容：
-    /// 1. 同步任务执行
-    ///    - 验证任务正确执行
-    ///    - 验证参数正确传递
-    /// 
-    /// 2. 异步任务执行
-    ///    - 验证任务正确执行
-    ///    - 验证参数正确传递
-    /// 
-    /// 3. 多任务混合执行
-    ///    - 验证同步和异步任务的协同
-    ///    - 验证异步任务在存在同步任务时的行为转换
-    /// 
-    /// 4. 参数处理机制
-    ///    - 验证直接参数传递
-    ///    - 验证持久化参数（XPrefs）读取
-    ///    - 验证默认参数处理
-    /// </remarks>
     [Test]
     public void Run()
     {
         // 创建同步测试任务
-        // - Priority = 1：较低优先级
-        // - Runasync = false：同步执行
         var syncTask = new TestVisualTask { ID = "Test/Test Sync Visual Task", Priority = 1, Runasync = false };
         var syncMeta = new XEditor.Tasks.WorkerAttribute("Test Sync Visual Task", "Test", "Test Sync Visual Task");
         var syncParam = new XEditor.Tasks.Param("testParam", "Test Param", "Test Param Description")
@@ -318,11 +256,10 @@ public class TestXEditorTasksPanel
             ID = $"Task/{XEnv.Platform}/{syncTask.ID}/Test Param@Editor" // 使用标准格式构造参数ID
         };
         syncMeta.Params = new List<XEditor.Tasks.Param> { syncParam };
-        XEditor.Tasks.Workers[syncMeta] = syncTask;
+        XEditor.Tasks.Metas[syncTask.ID] = syncMeta;
+        XEditor.Tasks.Workers[syncTask.ID] = syncTask;
 
         // 创建异步测试任务
-        // - Priority = 0：较高优先级
-        // - Runasync = true：异步执行
         var asyncTask = new TestVisualTask { ID = "Test/Test Async Visual Task", Priority = 0, Runasync = true };
         var asyncMeta = new XEditor.Tasks.WorkerAttribute("Test Async Visual Task", "Test", "Test Async Visual Task");
         var asyncParam = new XEditor.Tasks.Param("testParam", "Test Param", "Test Param Description")
@@ -330,41 +267,33 @@ public class TestXEditorTasksPanel
             ID = $"Task/{XEnv.Platform}/{asyncTask.ID}/Test Param@Editor" // 使用标准格式构造参数ID
         };
         asyncMeta.Params = new List<XEditor.Tasks.Param> { asyncParam };
-        XEditor.Tasks.Workers[asyncMeta] = asyncTask;
+        XEditor.Tasks.Metas[asyncTask.ID] = asyncMeta;
+        XEditor.Tasks.Workers[asyncTask.ID] = asyncTask;
 
         var panel = ScriptableObject.CreateInstance<TaskRunner>();
 
         try
         {
             // 场景1：测试单个同步任务执行
-            // 验证点：
-            // - 任务成功执行
-            // - 参数正确传递
             TestVisualTask.Reset();
-            panel.taskArguments[syncMeta] = new Dictionary<XEditor.Tasks.Param, string> { { syncParam, "sync_value" } };
+            panel.taskArguments[syncTask.ID] = new Dictionary<XEditor.Tasks.Param, string> { { syncParam, "sync_value" } };
             panel.Run(new List<XEditor.Tasks.IWorker> { syncTask });
             Assert.That(TestVisualTask.executed, Is.True, "同步任务未执行");
             Assert.That(TestVisualTask.lastParam, Is.EqualTo("sync_value"), "同步任务参数传递错误");
             Assert.That(XFile.HasFile(XFile.PathJoin(TaskRunner.reportRoot, syncTask.ID.MD5())), Is.True, "同步任务结果缓存应当存在");
 
             // 场景2：测试单个异步任务执行
-            // 验证点：
-            // - 任务成功执行
-            // - 参数正确传递
             TestVisualTask.Reset();
-            panel.taskArguments[asyncMeta] = new Dictionary<XEditor.Tasks.Param, string> { { asyncParam, "async_value" } };
+            panel.taskArguments[asyncTask.ID] = new Dictionary<XEditor.Tasks.Param, string> { { asyncParam, "async_value" } };
             panel.Run(new List<XEditor.Tasks.IWorker> { asyncTask });
             Assert.That(TestVisualTask.executed, Is.True, "异步任务未执行");
             Assert.That(TestVisualTask.lastParam, Is.EqualTo("async_value"), "异步任务参数传递错误");
             Assert.That(XFile.HasFile(XFile.PathJoin(TaskRunner.reportRoot, asyncTask.ID.MD5())), Is.True, "异步任务结果缓存应当存在");
 
             // 场景3：测试多任务混合执行
-            // 验证点：
-            // - 多任务成功执行
-            // - 异步任务在有同步任务时转为同步执行
             TestVisualTask.Reset();
-            panel.taskArguments[syncMeta] = new Dictionary<XEditor.Tasks.Param, string> { { syncParam, "sync_multi" } };
-            panel.taskArguments[asyncMeta] = new Dictionary<XEditor.Tasks.Param, string> { { asyncParam, "async_multi" } };
+            panel.taskArguments[syncTask.ID] = new Dictionary<XEditor.Tasks.Param, string> { { syncParam, "sync_multi" } };
+            panel.taskArguments[asyncTask.ID] = new Dictionary<XEditor.Tasks.Param, string> { { asyncParam, "async_multi" } };
             var workers = new List<XEditor.Tasks.IWorker> { asyncTask, syncTask };
             panel.Run(workers);
             Assert.That(TestVisualTask.executed, Is.True, "多任务执行失败");
@@ -374,24 +303,19 @@ public class TestXEditorTasksPanel
             Assert.That(syncTask.Runasync, Is.False, "同步任务状态不应改变");
 
             // 场景4：测试持久化参数处理
-            // 验证点：
-            // - 从XPrefs正确读取持久化参数
-            // - 当taskArguments中没有参数时使用持久化值
             TestVisualTask.Reset();
             syncParam.Persist = true;
             XPrefs.Asset.Set(syncParam.ID, "persist_value");
-            panel.taskArguments.Remove(syncMeta); // 移除直接参数，强制使用持久化值
+            panel.taskArguments.Remove(syncTask.ID); // 移除直接参数，强制使用持久化值
             panel.Run(new List<XEditor.Tasks.IWorker> { syncTask });
             Assert.That(TestVisualTask.lastParam, Is.EqualTo("persist_value"), "持久化参数读取错误");
         }
         finally
         {
-            // 清理测试环境
-            // - 移除测试任务
-            // - 清理持久化参数
-            // - 重置面板状态
-            if (XEditor.Tasks.Workers.ContainsKey(syncMeta)) XEditor.Tasks.Workers.Remove(syncMeta);
-            if (XEditor.Tasks.Workers.ContainsKey(asyncMeta)) XEditor.Tasks.Workers.Remove(asyncMeta);
+            if (XEditor.Tasks.Metas.ContainsKey(syncTask.ID)) XEditor.Tasks.Metas.Remove(syncTask.ID);
+            if (XEditor.Tasks.Workers.ContainsKey(syncTask.ID)) XEditor.Tasks.Workers.Remove(syncTask.ID);
+            if (XEditor.Tasks.Metas.ContainsKey(asyncTask.ID)) XEditor.Tasks.Metas.Remove(asyncTask.ID);
+            if (XEditor.Tasks.Workers.ContainsKey(asyncTask.ID)) XEditor.Tasks.Workers.Remove(asyncTask.ID);
             if (syncParam.Persist) XPrefs.Asset.Unset(syncParam.ID);
 
             Object.DestroyImmediate(panel);

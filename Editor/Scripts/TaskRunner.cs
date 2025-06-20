@@ -4,7 +4,6 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,130 +13,144 @@ using EFramework.Utility;
 namespace EFramework.Editor
 {
     /// <summary>
-    /// 任务系统的可视化管理面板，对任务进行分组管理，提供可视化的参数配置等功能。
+    /// TaskRunner 是任务系统的可视化管理面板，对任务进行分组管理，提供可视化的参数配置等功能。
     /// </summary>
     [Serializable]
     internal class TaskRunner : EditorWindow
     {
         /// <summary>
-        /// 存储任务参数的字典，key 为任务属性，value 为参数字典。
+        /// Stateful 用来描述分组的折叠/选中状态。
+        /// </summary>
+        [Serializable]
+        internal class Stateful
+        {
+            /// <summary>
+            /// Key 是状态的键名。
+            /// </summary>
+            [SerializeField]
+            internal string Key;
+
+            /// <summary>
+            /// Status 表示折叠/选中的状态。
+            /// </summary>
+            [SerializeField]
+            internal bool Status;
+        }
+
+        /// <summary>
+        /// taskArguments 存储任务参数的字典，key 为任务属性，value 为参数字典。
         /// </summary>
         /// <remarks>
         /// 用于保存每个任务的参数配置，支持运行时修改和持久化。
         /// </remarks>
-        internal readonly Dictionary<XEditor.Tasks.WorkerAttribute, Dictionary<XEditor.Tasks.Param, string>> taskArguments = new();
+        internal readonly Dictionary<string, Dictionary<XEditor.Tasks.Param, string>> taskArguments = new();
 
         /// <summary>
-        /// 任务组列表，每个组包含多个相关的任务。
+        /// taskGroups 是任务组列表，每个组包含多个相关的任务。
         /// </summary>
         /// <remarks>
         /// 按照任务的 Group 属性进行分组，用于界面展示和批量操作。
         /// </remarks>
-        internal readonly List<List<XEditor.Tasks.WorkerAttribute>> taskGroups = new();
+        internal readonly List<List<string>> taskGroups = new();
 
         /// <summary>
-        /// 存储任务组展开状态的字典。
+        /// groupFoldouts 存储任务组展开状态的列表。
         /// </summary>
-        /// <remarks>
-        /// key 为组名，value 为展开状态。用于保持界面状态。
-        /// </remarks>
-        internal readonly Dictionary<string, bool> groupFoldouts = new();
+        [SerializeField]
+        internal List<Stateful> groupFoldouts = new();
 
         /// <summary>
-        /// 存储任务组选中状态的字典。
-        /// </summary>
-        /// <remarks>
-        /// key 为组名，value 为选中状态。用于批量操作。
-        /// </remarks>
-        internal readonly Dictionary<string, bool> groupSelects = new();
+        /// groupSelects 存储任务组选中状态的列表。
+        /// </summary> 
+        [SerializeField]
+        internal List<Stateful> groupSelects = new();
 
         /// <summary>
-        /// 存储任务展开状态的字典。
+        /// taskFoldouts 存储任务展开状态的列表。
         /// </summary>
-        /// <remarks>
-        /// key 为任务元数据，value 为展开状态。用于保持界面状态。
-        /// </remarks>
-        internal readonly Dictionary<XEditor.Tasks.WorkerAttribute, bool> taskFoldouts = new();
+        [SerializeField]
+        internal List<Stateful> taskFoldouts = new();
 
         /// <summary>
-        /// 存储任务选中状态的字典。
+        /// taskSelects 存储任务选中状态的列表。
         /// </summary>
-        /// <remarks>
-        /// key 为任务元数据，value 为选中状态。用于执行控制。
-        /// </remarks>
-        internal readonly Dictionary<XEditor.Tasks.WorkerAttribute, bool> taskSelects = new();
+        [SerializeField]
+        internal List<Stateful> taskSelects = new();
 
         /// <summary>
-        /// 任务执行顺序列表。
+        /// taskOrders 是任务执行顺序的列表。
         /// </summary>
-        /// <remarks>
-        /// 存储已选中任务的执行顺序，考虑任务间的依赖关系。
-        /// </remarks>
-        internal readonly List<XEditor.Tasks.WorkerAttribute> taskOrders = new();
+        [SerializeField]
+        internal List<string> taskOrders = new();
 
         /// <summary>
-        /// 是否展开所有任务组和任务。
+        /// taskExcutings 是正在执行的任务列表。
         /// </summary>
+        internal List<string> taskExcutings = new();
+
+        /// <summary>
+        /// foldoutAll 表示是否展开所有任务组和任务。
+        /// </summary>
+        [SerializeField]
         internal bool foldoutAll = true;
 
         /// <summary>
-        /// 是否选中所有任务组和任务。
+        /// selectAll 表示是否选中所有任务组和任务。
         /// </summary>
+        [SerializeField]
         internal bool selectAll = false;
 
         /// <summary>
-        /// 滚动视图位置。
+        /// scroll 是滚动视图的位置。
         /// </summary>
         internal Vector2 scroll = Vector2.zero;
 
         /// <summary>
-        /// 任务执行结果。
+        /// reportContent 是任务执行的结果。
         /// </summary>
-        internal readonly StringBuilder reportBuilder = new();
+        [SerializeField]
+        internal string reportContent;
 
         /// <summary>
-        /// 任务执行结果显示区域的滚动位置。
+        /// reportScroll 是任务执行结果显示区域的滚动位置。
         /// </summary>
         internal Vector2 reportScroll = Vector2.zero;
 
         /// <summary>
-        /// 任务执行结果显示区域初始高度。
+        /// reportHeight 是任务执行结果显示区域初始高度。
         /// </summary>
+        [SerializeField]
         internal float reportHeight = 150f;
 
         /// <summary>
-        /// 是否正在调整任务执行结果显示区域高度。
+        /// reportResizing 表示是否正在调整任务执行结果显示区域高度。
         /// </summary>
         internal bool reportResizing = false;
 
         /// <summary>
-        /// 缓存文件路径
+        /// reportRoot 是任务执行结果的文件根目录。
         /// </summary>
         internal static readonly string reportRoot = XFile.PathJoin(XEnv.ProjectPath, "Library/TaskRunner");
 
         /// <summary>
-        /// 窗口启用时的回调，初始化面板实例并重置状态。
+        /// OnEnable 是窗口启用时的回调，初始化面板实例并重置状态，通知所有实现了 IOnEnable 接口的任务。
         /// </summary>
         internal void OnEnable()
         {
+            // 重置数据
             taskArguments.Clear();
             taskGroups.Clear();
-            groupFoldouts.Clear();
-            groupSelects.Clear();
-            taskFoldouts.Clear();
-            taskSelects.Clear();
-            taskOrders.Clear();
-            foldoutAll = true;
-            selectAll = false;
+            taskExcutings.Clear();
 
-            foreach (var kvp in XEditor.Tasks.Workers)
+            // 对任务列表进行归并
+            foreach (var kvp in XEditor.Tasks.Metas)
             {
-                var meta = kvp.Key;
-                List<XEditor.Tasks.WorkerAttribute> group = null;
+                var meta = kvp.Value;
+                List<string> group = null;
                 for (var j = 0; j < taskGroups.Count; j++)
                 {
                     var temp = taskGroups[j];
-                    if (temp != null && temp.Count > 0 && temp[0].Group == meta.Group)
+                    if (temp != null && temp.Count > 0 && XEditor.Tasks.Metas[temp[0]].Group == meta.Group)
                     {
                         group = temp;
                         break;
@@ -145,10 +158,10 @@ namespace EFramework.Editor
                 }
                 if (group == null)
                 {
-                    group = new List<XEditor.Tasks.WorkerAttribute>();
+                    group = new List<string>();
                     taskGroups.Add(group);
                 }
-                group.Add(meta);
+                group.Add(kvp.Key);
             }
 
             // 对每个分组内的任务按优先级排序
@@ -176,7 +189,7 @@ namespace EFramework.Editor
         }
 
         /// <summary>
-        /// 窗口禁用时的回调，通知所有实现了 IOnDisable 接口的任务。
+        /// OnDisable 是窗口禁用时的回调，通知所有实现了 IOnDisable 接口的任务。
         /// </summary>
         internal void OnDisable()
         {
@@ -201,7 +214,7 @@ namespace EFramework.Editor
         }
 
         /// <summary>
-        /// 失去焦点时保存配置文件。
+        /// OnLostFocus 是失去焦点时的回调，保存变更的首选项。
         /// </summary>
         internal void OnLostFocus()
         {
@@ -212,7 +225,7 @@ namespace EFramework.Editor
         }
 
         /// <summary>
-        /// 窗口销毁时的回调，通知所有实现了 IOnDestroy 接口的任务，并清理面板实例。
+        /// OnDestroy 是窗口销毁时的回调，通知所有实现了 IOnDestroy 接口的任务，并清理面板实例。
         /// </summary>
         internal void OnDestroy()
         {
@@ -232,7 +245,7 @@ namespace EFramework.Editor
         }
 
         /// <summary>
-        /// 绘制窗口 GUI，包括任务组、任务列表、参数设置等界面元素。
+        /// OnGUI 绘制窗口 GUI，包括任务组、任务列表、参数设置等界面元素，通知所有实现了 IOnGUI 接口的任务。
         /// </summary>
         internal void OnGUI()
         {
@@ -246,23 +259,9 @@ namespace EFramework.Editor
             selectAll = EditorGUILayout.Toggle(selectAll);
             if (lastSelect != selectAll)
             {
-                if (selectAll == false)
-                {
-                    groupSelects.Clear();
-                    taskSelects.Clear();
-                    taskOrders.Clear();
-                }
-                else
-                {
-                    foreach (var group in taskGroups)
-                    {
-                        groupSelects[group[0].Group] = true;
-                    }
-                    foreach (var meta in XEditor.Tasks.Metas)
-                    {
-                        taskSelects[meta] = true;
-                    }
-                }
+                if (!selectAll) taskOrders.Clear();
+                foreach (var groupSelect in groupSelects) groupSelect.Status = selectAll;
+                foreach (var taskSelect in taskSelects) taskSelect.Status = selectAll;
             }
             GUILayout.EndVertical();
 
@@ -273,13 +272,10 @@ namespace EFramework.Editor
             if (GUILayout.Button(foldoutButton, EditorStyles.iconButton, GUILayout.Width(8)))
             {
                 foldoutAll = !foldoutAll;
-                foreach (var group in taskGroups)
+                foreach (var tasks in taskGroups)
                 {
-                    groupFoldouts[group[0].Group] = foldoutAll;
-                }
-                foreach (var meta in XEditor.Tasks.Metas)
-                {
-                    taskFoldouts[meta] = foldoutAll;
+                    groupFoldouts.Add(new Stateful { Key = XEditor.Tasks.Metas[tasks[0]].Name, Status = foldoutAll });
+                    foreach (var task in tasks) taskFoldouts.Add(new Stateful { Key = task, Status = foldoutAll });
                 }
             }
             GUILayout.EndVertical();
@@ -303,14 +299,14 @@ namespace EFramework.Editor
                 XLoom.RunInNext(() =>
                 {
                     var workers = new List<XEditor.Tasks.IWorker>();
-                    foreach (var meta in taskOrders)
+                    foreach (var task in taskOrders)
                     {
-                        workers.Add(XEditor.Tasks.Workers[meta]);
+                        workers.Add(XEditor.Tasks.Workers[task]);
                     }
                     var uworkers = new List<XEditor.Tasks.IWorker>();
                     foreach (var kvp in taskSelects)
                     {
-                        if (kvp.Value)
+                        if (kvp.Status)
                         {
                             var worker = XEditor.Tasks.Workers[kvp.Key];
                             if (workers.Contains(worker) == false)
@@ -336,49 +332,59 @@ namespace EFramework.Editor
             scroll = GUILayout.BeginScrollView(scroll);
             if (taskGroups != null && taskGroups.Count > 0)
             {
-                foreach (var group in taskGroups)
+                foreach (var tasks in taskGroups)
                 {
-                    var groupName = group[0].Group;
-                    if (string.IsNullOrEmpty(groupName)) continue;
+                    var groupMeta = XEditor.Tasks.Metas[tasks[0]];
+                    if (string.IsNullOrEmpty(groupMeta.Group)) continue;
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
                     EditorGUILayout.BeginHorizontal();
-                    groupSelects.TryGetValue(groupName, out lastSelect);
+                    var groupSelect = groupSelects.Find(ele => ele.Key == groupMeta.Group);
+                    if (groupSelect == null)
+                    {
+                        groupSelect = new Stateful { Key = groupMeta.Group };
+                        groupSelects.Add(groupSelect);
+                    }
+                    lastSelect = groupSelect.Status;
                     var currentSelect = EditorGUILayout.Toggle(lastSelect, GUILayout.MaxWidth(15));
                     if (lastSelect != currentSelect)
                     {
-                        groupSelects[groupName] = currentSelect;
-                        foreach (var meta in group)
+                        groupSelect.Status = currentSelect;
+                        foreach (var task in tasks)
                         {
-                            taskSelects[meta] = currentSelect;
-                            if (currentSelect == false) taskOrders.Remove(meta);
+                            var taskSelect = taskSelects.Find(ele => ele.Key == task);
+                            if (taskSelect != null) taskSelect.Status = currentSelect;
+                            if (currentSelect == false) taskOrders.Remove(task);
                         }
                     }
 
-                    var gfoldout = true;
-                    var gfoldoutRect = EditorGUILayout.GetControlRect();
-                    if (groupFoldouts.ContainsKey(groupName)) gfoldout = groupFoldouts[groupName];
-                    gfoldout = EditorGUI.Foldout(gfoldoutRect, gfoldout, new GUIContent(groupName, string.Join(", ", group.Select(ele => ele.Name))));
-                    groupFoldouts[groupName] = gfoldout;
+                    var groupFoldoutRect = EditorGUILayout.GetControlRect();
+                    var groupFoldout = groupFoldouts.Find(ele => ele.Key == groupMeta.Group);
+                    if (groupFoldout == null)
+                    {
+                        groupFoldout = new Stateful { Key = groupMeta.Group };
+                        groupFoldouts.Add(groupFoldout);
+                    }
+                    groupFoldout.Status = EditorGUI.Foldout(groupFoldoutRect, groupFoldout.Status, new GUIContent(groupMeta.Group, string.Join(", ", tasks)));
 
                     GUILayout.FlexibleSpace();
                     EditorGUILayout.BeginVertical();
                     GUILayout.Space(3);
                     if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture("d_PlayButton@2x"), "Execute task(s)."), EditorStyles.iconButton) ||
-                    (gfoldoutRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.clickCount == 2))
+                    (groupFoldoutRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.clickCount == 2))
                     {
                         Event.current.Use();
                         XLoom.RunInNext(() =>
                         {
                             var workers = new List<XEditor.Tasks.IWorker>();
-                            foreach (var meta in taskOrders)
+                            foreach (var task in taskOrders)
                             {
-                                if (group.Contains(meta)) workers.Add(XEditor.Tasks.Workers[meta]);
+                                if (tasks.Contains(task)) workers.Add(XEditor.Tasks.Workers[task]);
                             }
                             var uworkers = new List<XEditor.Tasks.IWorker>();
                             foreach (var kvp in taskSelects)
                             {
-                                if (kvp.Value && group.Contains(kvp.Key))
+                                if (tasks.Contains(kvp.Key))
                                 {
                                     var worker = XEditor.Tasks.Workers[kvp.Key];
                                     if (workers.Contains(worker) == false)
@@ -389,7 +395,7 @@ namespace EFramework.Editor
                             }
                             if (uworkers.Count == 0) // 未选中，则默认执行该分组的所有任务
                             {
-                                foreach (var meta in group)
+                                foreach (var meta in tasks)
                                 {
                                     uworkers.Add(XEditor.Tasks.Workers[meta]);
                                 }
@@ -404,89 +410,99 @@ namespace EFramework.Editor
 
                     EditorGUILayout.EndHorizontal();
 
-                    if (gfoldout)
+                    if (groupFoldout.Status)
                     {
-                        foreach (var meta in group)
+                        foreach (var task in tasks)
                         {
                             try
                             {
+                                var taskMeta = XEditor.Tasks.Metas[task];
+                                var taskWorker = XEditor.Tasks.Workers[task];
+
                                 EditorGUILayout.BeginHorizontal();
 
                                 EditorGUILayout.BeginVertical(GUILayout.MaxWidth(15));
                                 GUILayout.Space(4);
-                                taskSelects.TryGetValue(meta, out lastSelect);
+                                var taskSelect = taskSelects.Find(ele => ele.Key == task);
+                                if (taskSelect == null)
+                                {
+                                    taskSelect = new Stateful { Key = task };
+                                    taskSelects.Add(taskSelect);
+                                }
+                                lastSelect = taskSelect.Status;
                                 currentSelect = EditorGUILayout.Toggle(lastSelect);
                                 if (lastSelect != currentSelect)
                                 {
-                                    taskSelects[meta] = currentSelect;
-                                    if (currentSelect) taskOrders.Add(meta);
-                                    else taskOrders.Remove(meta);
+                                    taskSelect.Status = currentSelect;
+                                    if (currentSelect) taskOrders.Add(task);
+                                    else taskOrders.Remove(task);
                                 }
                                 EditorGUILayout.EndVertical();
 
                                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                                 GUILayout.BeginHorizontal();
-                                var idx = taskOrders.IndexOf(meta);
+                                var idx = taskOrders.IndexOf(task);
                                 var sidx = idx >= 0 ? $" #{idx + 1}" : "";
-                                var tfoldout = false;
-                                var tfoldoutRect = EditorGUILayout.GetControlRect();
-                                if (meta.Params != null && meta.Params.Count > 0 || meta.Worker != null && typeof(XEditor.Tasks.Panel.IOnGUI).IsAssignableFrom(meta.Worker))
+                                var taskFoldoutRect = EditorGUILayout.GetControlRect();
+                                var taskFoldout = taskFoldouts.Find(ele => ele.Key == task);
+                                if (taskFoldout == null)
                                 {
-                                    if (taskFoldouts.ContainsKey(meta)) tfoldout = taskFoldouts[meta];
-                                    tfoldout = EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, meta.Tooltip));
-                                    taskFoldouts[meta] = tfoldout;
+                                    taskFoldout = new Stateful { Key = task };
+                                    taskFoldouts.Add(taskFoldout);
                                 }
-                                else EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, meta.Tooltip));
+                                taskFoldout.Status = EditorGUI.Foldout(taskFoldoutRect, taskFoldout.Status, new GUIContent(taskMeta.Name + sidx, taskMeta.Tooltip));
                                 GUILayout.FlexibleSpace();
 
-                                var reportFile = XFile.PathJoin(reportRoot, XEditor.Tasks.Workers[meta].ID.MD5());
-                                if (XFile.HasFile(reportFile))
+                                if (taskExcutings.Contains(task)) GUILayout.Button(EditorGUIUtility.IconContent("Loading@2x"), EditorStyles.iconButton);
+                                else
                                 {
-                                    var reportJson = XFile.OpenText(reportFile);
-                                    var report = XObject.FromJson<XEditor.Tasks.Report>(reportJson);
-                                    if (report != null)
+                                    var reportFile = XFile.PathJoin(reportRoot, taskWorker.ID.MD5());
+                                    if (XFile.HasFile(reportFile))
                                     {
-                                        var reportIcon = report.Result == XEditor.Tasks.Result.Failed ? "d_console.erroricon.sml@2x" :
-                                            report.Result == XEditor.Tasks.Result.Succeeded ? "d_console.infoicon.sml@2x" : "d_console.warnicon.sml@2x";
-                                        if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture(reportIcon), "Show Report."), EditorStyles.iconButton))
+                                        var reportJson = XFile.OpenText(reportFile);
+                                        var report = XObject.FromJson<XEditor.Tasks.Report>(reportJson);
+                                        if (report != null)
                                         {
-                                            reportBuilder.Clear();
-                                            var color = report.Result == XEditor.Tasks.Result.Failed ? "red" :
-                                                report.Result == XEditor.Tasks.Result.Succeeded ? "green" : "yellow";
-                                            reportBuilder.Append($"\"{XEditor.Tasks.Workers[meta].ID}\": ");
-                                            reportBuilder.Append(reportJson
-                                                .Replace("\"Result\": 2", "<color=red><b>\"Result\": 2</b></color>")
-                                                .Replace("\"Result\": 1", "<color=green><b>\"Result\": 1</b></color>")
-                                                .Replace("\"Result\": 0", "<color=yellow><b>\"Result\": 0</b></color>")
-                                                .Replace("\"Result\": 3", "<color=yellow><b>\"Result\": 3</b></color>"));
-                                            reportScroll = Vector2.zero;
+                                            var reportIcon = report.Result == XEditor.Tasks.Result.Failed ? "d_console.erroricon.sml@2x" :
+                                                report.Result == XEditor.Tasks.Result.Succeeded ? "d_console.infoicon.sml@2x" : "d_console.warnicon.sml@2x";
+                                            if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture(reportIcon), "Show Report."), EditorStyles.iconButton))
+                                            {
+                                                reportContent = new StringBuilder()
+                                                .Append($"\"{taskWorker.ID}\": ")
+                                                .Append(reportJson
+                                                    .Replace("\"Result\": 2", "<color=red><b>\"Result\": 2</b></color>")
+                                                    .Replace("\"Result\": 1", "<color=green><b>\"Result\": 1</b></color>")
+                                                    .Replace("\"Result\": 0", "<color=yellow><b>\"Result\": 0</b></color>")
+                                                    .Replace("\"Result\": 3", "<color=yellow><b>\"Result\": 3</b></color>"))
+                                                .ToString();
+                                                reportScroll = Vector2.zero;
+                                            }
                                         }
                                     }
-                                }
-                                if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture("d_PlayButton@2x"), "Execute task."), EditorStyles.iconButton) ||
-                                (tfoldoutRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.clickCount == 2))
-                                {
-                                    Event.current.Use();
-                                    XLoom.RunInNext(() =>
+                                    if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture("d_PlayButton@2x"), "Execute task."), EditorStyles.iconButton) ||
+                                      (taskFoldoutRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.clickCount == 2))
                                     {
-                                        var worker = XEditor.Tasks.Workers[meta];
-                                        Run(new List<XEditor.Tasks.IWorker> { worker });
-                                    });
+                                        Event.current.Use();
+                                        XLoom.RunInNext(() =>
+                                        {
+                                            Run(new List<XEditor.Tasks.IWorker> { taskWorker });
+                                        });
+                                    }
                                 }
                                 GUILayout.EndHorizontal();
 
-                                if (tfoldout)
+                                if (taskFoldout.Status)
                                 {
-                                    taskArguments.TryGetValue(meta, out var marguments);
+                                    taskArguments.TryGetValue(task, out var marguments);
 
-                                    if (meta.Params != null && meta.Params.Count > 0)
+                                    if (taskMeta.Params != null && taskMeta.Params.Count > 0)
                                     {
                                         if (marguments == null)
                                         {
                                             marguments = new Dictionary<XEditor.Tasks.Param, string>();
-                                            taskArguments[meta] = marguments;
+                                            taskArguments[task] = marguments;
                                         }
-                                        foreach (var param in meta.Params)
+                                        foreach (var param in taskMeta.Params)
                                         {
                                             EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
                                             EditorGUILayout.LabelField(new GUIContent(param.Name.Omit(10), !string.IsNullOrEmpty(param.Tooltip) ? param.Tooltip : param.Name), GUILayout.Width(70));
@@ -503,13 +519,12 @@ namespace EFramework.Editor
                                         }
                                     }
 
-                                    if (meta.Worker != null && typeof(XEditor.Tasks.Panel.IOnGUI).IsAssignableFrom(meta.Worker))
+                                    if (taskMeta.Worker != null && typeof(XEditor.Tasks.Panel.IOnGUI).IsAssignableFrom(taskMeta.Worker))
                                     {
                                         try
                                         {
-                                            var worker = XEditor.Tasks.Workers[meta];
                                             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                                            try { (worker as XEditor.Tasks.Panel.IOnGUI).OnGUI(); }
+                                            try { (taskWorker as XEditor.Tasks.Panel.IOnGUI).OnGUI(); }
                                             catch (Exception e) { XLog.Panic(e); }
                                             EditorGUILayout.EndVertical();
                                         }
@@ -565,10 +580,10 @@ namespace EFramework.Editor
                 reportScroll = EditorGUILayout.BeginScrollView(reportScroll, GUILayout.Height(reportHeight));
                 var richTextStyle = new GUIStyle(EditorStyles.label) { richText = true, wordWrap = true };
                 EditorGUILayout.SelectableLabel(
-                    reportBuilder.ToString(),
+                    reportContent,
                     richTextStyle,
                     GUILayout.ExpandWidth(true),
-                    GUILayout.Height(richTextStyle.CalcHeight(new GUIContent(reportBuilder.ToString()), position.width - 20))
+                    GUILayout.Height(richTextStyle.CalcHeight(new GUIContent(reportContent), position.width - 20))
                 );
                 EditorGUILayout.EndScrollView();
             }
@@ -576,7 +591,7 @@ namespace EFramework.Editor
         }
 
         /// <summary>
-        /// 执行任务列表
+        /// Run 执行任务列表。
         /// </summary>
         /// <param name="workers">要执行的任务列表</param>
         internal async void Run(List<XEditor.Tasks.IWorker> workers)
@@ -587,20 +602,21 @@ namespace EFramework.Editor
             var hasSync = false;
             foreach (var worker in workers)
             {
-                var meta = XEditor.Tasks.Workers.First(kvp => kvp.Value == worker).Key;
-                if (!meta.Runasync)
+                var meta = XEditor.Tasks.Metas[worker.ID];
+                if (!meta.Runasync) hasSync = true;
+                if (!taskExcutings.Contains(worker.ID))
                 {
-                    hasSync = true;
-                    break;
+                    // 监控正在执行的任务
+                    taskExcutings.Add(worker.ID);
                 }
             }
 
             // 执行任务
             foreach (var worker in workers)
             {
-                var meta = XEditor.Tasks.Workers.First(kvp => kvp.Value == worker).Key;
+                var meta = XEditor.Tasks.Metas[worker.ID];
                 var arguments = new Dictionary<string, string>();
-                taskArguments.TryGetValue(meta, out var marguments);
+                taskArguments.TryGetValue(worker.ID, out var marguments);
                 foreach (var param in meta.Params)
                 {
                     if (marguments != null && marguments.TryGetValue(param, out var pvalue)) arguments[param.Name] = pvalue;
@@ -614,20 +630,22 @@ namespace EFramework.Editor
                 var report = XEditor.Tasks.Execute(worker: worker, arguments: arguments);
                 if (worker.Runasync) await report.Task;
 
+                // 移除正在执行的任务
+                taskExcutings.Remove(worker.ID);
+
                 // 保存任务执行结果
                 var reportJson = XObject.ToJson(report, true);
                 var reportFile = XFile.PathJoin(reportRoot, worker.ID.MD5());
                 XFile.SaveText(reportFile, reportJson);
 
-                reportBuilder.Clear();
-                var color = report.Result == XEditor.Tasks.Result.Failed ? "red" :
-                    report.Result == XEditor.Tasks.Result.Succeeded ? "green" : "yellow";
-                reportBuilder.Append($"\"{worker.ID}\": ");
-                reportBuilder.Append(reportJson
+                reportContent = new StringBuilder()
+                .Append($"\"{worker.ID}\": ")
+                .Append(reportJson
                     .Replace("\"Result\": 2", "<color=red><b>\"Result\": 2</b></color>")
                     .Replace("\"Result\": 1", "<color=green><b>\"Result\": 1</b></color>")
                     .Replace("\"Result\": 0", "<color=yellow><b>\"Result\": 0</b></color>")
-                    .Replace("\"Result\": 3", "<color=yellow><b>\"Result\": 3</b></color>"));
+                    .Replace("\"Result\": 3", "<color=yellow><b>\"Result\": 3</b></color>"))
+                .ToString();
                 reportScroll = Vector2.zero;
             }
         }
