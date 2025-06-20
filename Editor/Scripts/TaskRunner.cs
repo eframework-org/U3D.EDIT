@@ -257,11 +257,11 @@ namespace EFramework.Editor
                 foldoutAll = !foldoutAll;
                 foreach (var group in taskGroups)
                 {
-                    EditorPrefs.SetBool(group[0].Group, foldoutAll);
+                    EditorPrefs.SetBool(XFile.PathJoin(XEnv.ProjectPath, "Task", group[0].Group), foldoutAll);
                 }
                 foreach (var meta in XEditor.Tasks.Metas)
                 {
-                    EditorPrefs.SetBool(meta.Name, foldoutAll);
+                    EditorPrefs.SetBool(XFile.PathJoin(XEnv.ProjectPath, "Task", meta.Group, meta.Name), foldoutAll);
                 }
             }
             GUILayout.EndVertical();
@@ -337,10 +337,10 @@ namespace EFramework.Editor
                         }
                     }
 
-                    var gfoldout = EditorPrefs.GetBool(groupName, true);
+                    var gfoldout = EditorPrefs.GetBool(XFile.PathJoin(XEnv.ProjectPath, "Task", groupName), true);
                     var gfoldoutRect = EditorGUILayout.GetControlRect();
                     gfoldout = EditorGUI.Foldout(gfoldoutRect, gfoldout, new GUIContent(groupName, string.Join(",", group.Select(ele => ele.Name))));
-                    EditorPrefs.SetBool(groupName, gfoldout);
+                    EditorPrefs.SetBool(XFile.PathJoin(XEnv.ProjectPath, "Task", groupName), gfoldout);
 
                     GUILayout.FlexibleSpace();
                     EditorGUILayout.BeginVertical();
@@ -409,13 +409,13 @@ namespace EFramework.Editor
                                 GUILayout.BeginHorizontal();
                                 var idx = taskOrders.IndexOf(meta);
                                 var sidx = idx >= 0 ? $" #{idx + 1}" : "";
-                                var tfoldout = EditorPrefs.GetBool(meta.Name, false);
+                                var tfoldout = EditorPrefs.GetBool(XFile.PathJoin(XEnv.ProjectPath, "Task", meta.Group, meta.Name), false);
                                 var tfoldoutRect = EditorGUILayout.GetControlRect();
                                 tfoldout = EditorGUI.Foldout(tfoldoutRect, tfoldout, new GUIContent(meta.Name + sidx, meta.Tooltip));
-                                EditorPrefs.SetBool(meta.Name, tfoldout);
+                                EditorPrefs.SetBool(XFile.PathJoin(XEnv.ProjectPath, "Task", meta.Group, meta.Name), tfoldout);
                                 GUILayout.FlexibleSpace();
 
-                                if (EditorPrefs.GetBool(meta.Name + "Loading", false))
+                                if (EditorPrefs.GetBool(XFile.PathJoin(XEnv.ProjectPath, "Task", meta.Group, meta.Name, "Loading"), false))
                                 {
                                     GUILayout.Button(EditorGUIUtility.IconContent("Loading@2x"), EditorStyles.iconButton);
                                 }
@@ -449,7 +449,7 @@ namespace EFramework.Editor
                                 if (GUILayout.Button(new GUIContent("", EditorGUIUtility.FindTexture("d_PlayButton@2x"), "Execute task."), EditorStyles.iconButton) ||
                                 (tfoldoutRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.clickCount == 2))
                                 {
-                                    EditorPrefs.SetBool(meta.Name + "Loading", true);
+                                    EditorPrefs.SetBool(XFile.PathJoin(XEnv.ProjectPath, "Task", meta.Group, meta.Name, "Loading"), true);
                                     Event.current.Use();
                                     XLoom.RunInNext(() =>
                                     {
@@ -613,7 +613,7 @@ namespace EFramework.Editor
                     .Replace("\"Result\": 0", "<color=yellow><b>\"Result\": 0</b></color>")
                     .Replace("\"Result\": 3", "<color=yellow><b>\"Result\": 3</b></color>"));
                 reportScroll = Vector2.zero;
-                EditorPrefs.SetBool(meta.Name + "Loading", false);
+                EditorPrefs.SetBool(XFile.PathJoin(XEnv.ProjectPath, "Task", meta.Group, meta.Name, "Loading"), false);
             }
         }
     }
