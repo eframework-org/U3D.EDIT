@@ -358,7 +358,7 @@ namespace EFramework.Editor
                     var gfoldout = true;
                     var gfoldoutRect = EditorGUILayout.GetControlRect();
                     if (groupFoldouts.ContainsKey(groupName)) gfoldout = groupFoldouts[groupName];
-                    gfoldout = EditorGUI.Foldout(gfoldoutRect, gfoldout, new GUIContent(groupName, group[0].Tooltip));
+                    gfoldout = EditorGUI.Foldout(gfoldoutRect, gfoldout, new GUIContent(groupName, string.Join(", ", group.Select(ele => ele.Name))));
                     groupFoldouts[groupName] = gfoldout;
 
                     GUILayout.FlexibleSpace();
