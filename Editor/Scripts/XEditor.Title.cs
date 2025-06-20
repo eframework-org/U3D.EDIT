@@ -3,9 +3,11 @@
 // license that can be found in the LICENSE file.
 
 using System;
+using System.IO;
+using System.Threading.Tasks;
 using UnityEditor;
 using EFramework.Utility;
-using System.Threading.Tasks;
+
 #if UNITY_6000_0_OR_NEWER
 using UnityEngine;
 #endif
@@ -27,7 +29,7 @@ namespace EFramework.Editor
         /// 1. 基本功能
         /// 
         /// 1.1 标题信息格式
-        ///     首选项信息格式：`[Prefs&lt;是否修改&gt;: &lt;作者&gt;/&lt;渠道&gt;/&lt;版本&gt;/&lt;模式&gt;/&lt;日志级别&gt;]，示例：[Prefs*: Admin/Default/1.0/Test/Debug]`
+        ///     首选项信息格式：`[Preferences&lt;是否修改&gt;: &lt;作者&gt;/&lt;渠道&gt;/&lt;版本&gt;/&lt;模式&gt;/&lt;日志级别&gt;]，示例：[Preferences*: Admin/Default/1.0/Test/Debug]`
         ///     
         ///     Git 信息格式：`[Git&lt;是否存在未提交的修改&gt;: &lt;分支名&gt; &lt;待推送数量&gt; &lt;待拉取数量&gt;]，示例：[Git*: master ↑1 ↓2]，[Git*: ⟳]`
         /// </code>
@@ -191,9 +193,11 @@ namespace EFramework.Editor
                 if (isRefreshing) return;
                 try
                 {
-                    var prefsDirty = !XFile.HasFile(XPrefs.Asset.File) || !XPrefs.Asset.Keys.MoveNext() ? "*" : "";
-                    prefsLabel = $"[Prefs{prefsDirty}: {XEnv.Author}/{XEnv.Channel}/{XEnv.Version}/{XEnv.Mode}/{XLog.Level()}]";
+                    var prefsName = string.IsNullOrEmpty(XPrefs.Asset.File) ? "Unknown" : Path.GetFileName(XPrefs.Asset.File);
+                    var prefsInvalid = !XFile.HasFile(XPrefs.Asset.File) || XPrefs.Asset.Count == 0 ? "*" : "";
+                    prefsLabel = $"[Preferences{prefsInvalid}: {prefsName}/{XEnv.Channel}/{XEnv.Version}/{XEnv.Mode}/{XLog.Level()}]";
                     isRefreshing = true;
+
 #if UNITY_6000_0_OR_NEWER
                     EditorApplication.UpdateMainWindowTitle();
 #else

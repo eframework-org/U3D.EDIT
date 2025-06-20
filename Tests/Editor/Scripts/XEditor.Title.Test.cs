@@ -4,6 +4,7 @@
 
 #if UNITY_INCLUDE_TESTS
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using UnityEditor;
@@ -53,10 +54,10 @@ public class TestXEditorTitle
     /// </remarks>
     [Obsolete]
     [TestCase("", "", 0, 0, 0, false, "Unity", Description = "无首选项和 Git 信息时的默认标题")]
-    [TestCase("[Prefs: Test/Channel/1.0.0/Debug/Info]", "", 0, 0, 0, false, "Unity - [Prefs: Test/Channel/1.0.0/Debug/Info]", Description = "仅包含首选项标签的标题")]
+    [TestCase("[Preferences: Test/Channel/1.0.0/Debug/Info]", "", 0, 0, 0, false, "Unity - [Preferences: Test/Channel/1.0.0/Debug/Info]", Description = "仅包含首选项标签的标题")]
     [TestCase("", "main", 1, 2, 3, false, "Unity - [Git*: main ↑2 ↓3]", Description = "仅包含 Git 信息的标题")]
     [TestCase("", "main", 0, 0, 0, true, "Unity - [Git: main ⟳]", Description = "刷新状态下的 Git 标题")]
-    [TestCase("[Prefs: Test/Channel/1.0.0/Debug/Info]", "main", 1, 0, 0, false, "Unity - [Prefs: Test/Channel/1.0.0/Debug/Info] - [Git*: main]", Description = "首选项和 Git 信息组合的标题")]
+    [TestCase("[Preferences: Test/Channel/1.0.0/Debug/Info]", "main", 1, 0, 0, false, "Unity - [Preferences: Test/Channel/1.0.0/Debug/Info] - [Git*: main]", Description = "首选项和 Git 信息组合的标题")]
     public void SetTitle(string prefsLabel, string gitBranch, int gitDirtyCount, int gitPushCount, int gitPullCount, bool isRefreshing, string expected)
     {
 #if UNITY_6000_0_OR_NEWER
@@ -111,8 +112,9 @@ public class TestXEditorTitle
         XEditor.Title.isRefreshing = false;
         await XEditor.Title.Refresh();
 
-        var prefsDirty = !XFile.HasFile(XPrefs.Asset.File) || !XPrefs.Asset.Keys.MoveNext() ? "*" : "";
-        var expectedPrefs = $"[Prefs{prefsDirty}: {XEnv.Author}/{XEnv.Channel}/{XEnv.Version}/{XEnv.Mode}/{XLog.Level()}]";
+        var prefsName = string.IsNullOrEmpty(XPrefs.Asset.File) ? "Unknown" : Path.GetFileName(XPrefs.Asset.File);
+        var prefsInvalid = !XFile.HasFile(XPrefs.Asset.File) || XPrefs.Asset.Count == 0 ? "*" : "";
+        var expectedPrefs = $"[Preferences{prefsInvalid}: {prefsName}/{XEnv.Channel}/{XEnv.Version}/{XEnv.Mode}/{XLog.Level()}]";
         Assert.That(XEditor.Title.prefsLabel, Is.EqualTo(expectedPrefs), "Should update preferences label");
 
         var task = XEditor.Cmd.Run("git", print: false, args: new string[] { "rev-parse", "--git-dir" });

@@ -6,6 +6,7 @@
 - 优化 Task Runner 面板的首选项显示，提升用户体验
 - 重构 XEditor.Tasks 模块的 Metas 和 Workers 的数据维护方式
 - 整理 XEditor.Tasks 模块的单元测试及代码注释
+- 修改 XEditor.Title 模块的 Preferences 显示文本格式
 
 ### 修复
 - 修复 XEditor.Tasks 面板 Group 的 Tooltip 显示错误问题
