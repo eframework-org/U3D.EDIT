@@ -281,11 +281,11 @@ namespace EFramework.Editor
             GUILayout.EndVertical();
 
             var prefsName = string.IsNullOrEmpty(XPrefs.Asset.File) ? "Unknown" : Path.GetFileName(XPrefs.Asset.File);
-            var prefsContent = XPrefs.Asset.Json();
+            var prefsContent = $"[Preferences: {prefsName}/{XEnv.Channel}/{XEnv.Version}/{XEnv.Mode}/{XLog.Level()}]";
             var prefsInvalid = !XFile.HasFile(XPrefs.Asset.File) || !XPrefs.Asset.Keys.MoveNext();
             var ocolor = GUI.color;
             if (prefsInvalid) GUI.color = Color.gray;
-            if (EditorGUILayout.LinkButton(new GUIContent($"[Preferences: {prefsName}]", prefsContent)))
+            if (EditorGUILayout.LinkButton(new GUIContent(prefsContent)))
             {
                 XEditor.Prefs.Open();
             }

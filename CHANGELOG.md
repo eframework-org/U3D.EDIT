@@ -3,6 +3,7 @@
 ## [0.1.4] - 
 ### 变更
 - 优化 Task Runner 面板状态的持久化功能，提升用户体验
+- 优化 Task Runner 面板的首选项显示，提升用户体验
 - 重构 XEditor.Tasks 模块的 Metas 和 Workers 的数据维护方式
 - 整理 XEditor.Tasks 模块的单元测试及代码注释
 
