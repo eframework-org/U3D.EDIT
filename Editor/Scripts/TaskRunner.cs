@@ -282,7 +282,7 @@ namespace EFramework.Editor
 
             var prefsName = string.IsNullOrEmpty(XPrefs.Asset.File) ? "Unknown" : Path.GetFileName(XPrefs.Asset.File);
             var prefsContent = $"[Preferences: {prefsName}/{XEnv.Channel}/{XEnv.Version}/{XEnv.Mode}/{XLog.Level()}]";
-            var prefsInvalid = !XFile.HasFile(XPrefs.Asset.File) || !XPrefs.Asset.Keys.MoveNext();
+            var prefsInvalid = !XFile.HasFile(XPrefs.Asset.File) || XPrefs.Asset.Count == 0;
             var ocolor = GUI.color;
             if (prefsInvalid) GUI.color = Color.gray;
             if (EditorGUILayout.LinkButton(new GUIContent(prefsContent)))
