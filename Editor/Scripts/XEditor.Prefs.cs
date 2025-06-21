@@ -215,12 +215,6 @@ namespace EFramework.Editor
             internal List<List<XPrefs.IPanel>> sections;
 
             /// <summary>
-            /// expandeds 是各区域折叠状态字典。
-            /// </summary>
-            [SerializeField]
-            internal List<string> expandeds = new();
-
-            /// <summary>
             /// visualElement 是首选项窗口的根视觉元素。
             /// </summary>
             internal VisualElement visualElement;
