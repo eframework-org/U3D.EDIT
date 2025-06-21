@@ -367,6 +367,10 @@ void MyPostHandler.Process(params object[] args)
 }
 ```
 
+### 5. 任务可视化面板未保存子面板的状态?
+
+Task Runner 面板 OnEnable/OnDisable 时 XEditor.Tasks.Panel 实例未恢复/持久化，待后续版本优化。
+
 更多问题，请查阅[问题反馈](../CONTRIBUTING.md#问题反馈)。
 
 ## 项目信息
