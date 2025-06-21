@@ -7,6 +7,7 @@
 - 重构 XEditor.Tasks 模块的 Metas 和 Workers 的数据维护方式
 - 整理 XEditor.Tasks 模块的单元测试及代码注释
 - 修改 XEditor.Title 模块的 Preferences 显示文本格式
+- 新增 XEditor.Prefs 显示面板的分组折叠持久化功能
 
 ### 修复
 - 修复 XEditor.Tasks 面板 Group 的 Tooltip 显示错误问题

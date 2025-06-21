@@ -133,45 +133,45 @@ namespace EFramework.Editor
         {
             #region 静态成员
             /// <summary>
-            /// 用于标记首选项根目录路径属性的特性。
+            /// RootAttribute 用于标记首选项根目录路径属性的特性。
             /// 被此特性标记的静态属性将被用作首选项根目录路径。
             /// </summary>
             [AttributeUsage(AttributeTargets.Property)]
             public class RootAttribute : Attribute { }
 
             /// <summary>
-            /// 标记是否已初始化首选项根目录路径。
+            /// root 标记是否已初始化首选项根目录路径。
             /// </summary>
             internal static bool root;
 
             /// <summary>
-            /// 存储首选项根目录路径属性信息。
+            /// rootProp 存储首选项根目录路径属性信息。
             /// </summary>
             internal static PropertyInfo rootProp;
 
             /// <summary>
-            /// 获取首选项根目录路径。
+            /// Root 获取首选项根目录路径。
             /// 如果未通过 <see cref="RootAttribute"/> 自定义，则返回默认路径：项目目录/Docs/Prefs。
             /// </summary>
             public static string Root { get => Const.GetCoustom<RootAttribute, string>(ref root, ref rootProp, XFile.PathJoin(XEnv.ProjectPath, "ProjectSettings", "Preferences")); }
 
             /// <summary>
-            /// 配置后缀，用于标识首选项文件类型。
+            /// Extension 是配置的后缀，用于标识首选项文件类型。
             /// </summary>
             public const string Extension = ".json";
 
             /// <summary>
-            /// 菜单路径，定义了在 Unity 主菜单中的位置。
+            /// MenuPath 是菜单栏的路径，定义了在 Unity 主菜单中的位置。
             /// </summary>
             internal const string MenuPath = "Tools/EFramework/Preferences";
 
             /// <summary>
-            /// 项目设置菜单路径，定义了在 Project Settings 窗口中的位置。
+            /// ProjMenu 是项目设置菜单栏的路径，定义了在 Project Settings 窗口中的位置。
             /// </summary>
             internal const string ProjMenu = "Project/EFramework/Preferences";
 
             /// <summary>
-            /// 打开首选项设置窗口。
+            /// Open 打开首选项设置窗口。
             /// </summary>
             [MenuItem(MenuPath)]
             public static void Open() { SettingsService.OpenProjectSettings(ProjMenu); }
@@ -179,7 +179,7 @@ namespace EFramework.Editor
             internal static Prefs Instance = new();
 
             /// <summary>
-            /// 提供首选项提供者组，用于 Unity 编辑器设置系统的注册。
+            /// Provider 提供了首选项提供者数组，用于 Unity 编辑器设置系统的注册。
             /// </summary>
             /// <returns>包含本首选项提供者的数组。</returns>
             [SettingsProviderGroup]
@@ -190,42 +190,43 @@ namespace EFramework.Editor
 
             #region 类型成员
             /// <summary>
-            /// 当前活动的首选项目标对象。
+            /// activeTarget 是当前活动的首选项目标对象。
             /// </summary>
             internal XPrefs.IBase activeTarget;
 
             /// <summary>
-            /// 当前选中的首选项索引。
+            /// activeIndex 是当前选中的首选项索引。
             /// </summary>
             internal int activeIndex = -1;
 
             /// <summary>
-            /// 所有首选项面板列表。
+            /// panels 是所有首选项的面板列表。
             /// </summary>
             internal List<XPrefs.IPanel> panels;
 
             /// <summary>
-            /// 首选项面板缓存，按类型索引。
+            /// panelCache 是首选项的面板缓存，按类型索引。
             /// </summary>
             internal readonly Dictionary<Type, XPrefs.IPanel> panelCache = new();
 
             /// <summary>
-            /// 按区域分组的首选项面板列表。
+            /// sections 是按区域分组的首选项面板列表。
             /// </summary>
             internal List<List<XPrefs.IPanel>> sections;
 
             /// <summary>
-            /// 各区域折叠状态字典。
+            /// expandeds 是各区域折叠状态字典。
             /// </summary>
-            internal readonly Dictionary<string, bool> foldouts = new();
+            [SerializeField]
+            internal List<string> expandeds = new();
 
             /// <summary>
-            /// 首选项窗口的根视觉元素。
+            /// visualElement 是首选项窗口的根视觉元素。
             /// </summary>
             internal VisualElement visualElement;
 
             /// <summary>
-            /// 重新加载所有首选项面板。
+            /// Reload 重新加载所有首选项面板。
             /// 收集所有实现了 XPrefs.IPanel 接口的类型，并创建面板实例。
             /// 将面板按区域分组并排序。
             /// </summary>
@@ -300,7 +301,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 当首选项面板被激活时调用。
+            /// OnActivate 当首选项面板被激活时调用。
             /// 初始化根视觉元素并重新加载面板。
             /// </summary>
             /// <param name="searchContext">搜索上下文字符串</param>
@@ -312,7 +313,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 绘制首选项面板的标题栏界面。
+            /// OnTitleBarGUI 绘制首选项面板的标题栏界面。
             /// 显示可用的首选项文件列表，并提供克隆、删除等操作。
             /// </summary>
             public override void OnTitleBarGUI()
@@ -430,7 +431,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 绘制首选项面板的主体界面。
+            /// OnGUI 绘制首选项面板的主体界面。
             /// 按区域分组显示各个首选项面板。
             /// </summary>
             /// <param name="searchContext">搜索上下文字符串</param>
@@ -444,12 +445,16 @@ namespace EFramework.Editor
                         var sectionName = section[0].Section;
                         if (string.IsNullOrEmpty(sectionName)) continue;
                         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                        var foldout = true;
-                        if (foldouts.ContainsKey(sectionName)) foldout = foldouts[sectionName];
-                        foldout = EditorGUILayout.Foldout(foldout, new GUIContent(sectionName, section[0].Tooltip));
-                        if (section[0].Foldable) foldouts[sectionName] = foldout;
+                        var expanded = true;
+                        if (section[0].Foldable)
+                        {
+                            expanded = EditorPrefs.GetBool(XFile.PathJoin(XEnv.ProjectPath, "Preferences", sectionName), true);
+                            var newExpanded = EditorGUILayout.Foldout(expanded, new GUIContent(sectionName, section[0].Tooltip));
+                            if (expanded != newExpanded) EditorPrefs.SetBool(XFile.PathJoin(XEnv.ProjectPath, "Preferences", sectionName), newExpanded);
+                        }
+                        else EditorGUILayout.Foldout(expanded, new GUIContent(sectionName, section[0].Tooltip));
 
-                        if (foldout)
+                        if (expanded)
                         {
                             foreach (var panel in section)
                             {
@@ -468,7 +473,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 绘制首选项面板的底部界面。
+            /// OnFooterBarGUI 绘制首选项面板的底部界面。
             /// 提供保存和应用首选项的按钮。
             /// </summary>
             public override void OnFooterBarGUI()
@@ -485,8 +490,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 当首选项面板被关闭时调用。
-            /// 对所有面板执行停用操作。
+            /// OnDeactivate 当首选项面板被关闭时调用，对所有面板执行停用操作。
             /// </summary>
             public override void OnDeactivate()
             {
@@ -506,7 +510,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 验证所有首选项面板的设置是否有效。
+            /// Validate 验证所有首选项面板的设置是否有效。
             /// </summary>
             /// <returns>如果所有面板验证通过则返回 true，否则返回 false</returns>
             internal bool Validate()
@@ -530,7 +534,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 保存首选项设置。
+            /// Save 保存首选项设置。
             /// 如果 apply 为 true，则同时应用设置到当前编辑器会话。
             /// </summary>
             /// <param name="apply">是否应用设置到当前编辑器会话</param>
