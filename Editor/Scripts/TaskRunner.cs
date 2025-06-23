@@ -595,7 +595,7 @@ namespace EFramework.Editor
         /// Run 执行任务列表。
         /// </summary>
         /// <param name="workers">要执行的任务列表</param>
-        internal async void Run(List<XEditor.Tasks.IWorker> workers)
+        internal async Task Run(List<XEditor.Tasks.IWorker> workers)
         {
             if (workers == null || workers.Count == 0) return;
 

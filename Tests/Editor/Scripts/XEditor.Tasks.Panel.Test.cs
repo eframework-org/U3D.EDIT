@@ -4,10 +4,11 @@
 
 #if UNITY_INCLUDE_TESTS
 using NUnit.Framework;
-using EFramework.Editor;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
+using EFramework.Editor;
 using EFramework.Utility;
 
 /// <summary>
@@ -242,11 +243,12 @@ public class TestXEditorTasksPanel
         }
     }
 
+#if UNITY_6000_0_OR_NEWER
     /// <summary>
     /// 测试任务执行功能。
     /// </summary>
     [Test]
-    public void Run()
+    public async Task Run()
     {
         // 创建同步测试任务
         var syncTask = new TestVisualTask { ID = "Test/Test Sync Visual Task", Priority = 1, Runasync = false };
@@ -277,7 +279,7 @@ public class TestXEditorTasksPanel
             // 场景1：测试单个同步任务执行
             TestVisualTask.Reset();
             panel.taskArguments[syncTask.ID] = new Dictionary<XEditor.Tasks.Param, string> { { syncParam, "sync_value" } };
-            panel.Run(new List<XEditor.Tasks.IWorker> { syncTask });
+            await panel.Run(new List<XEditor.Tasks.IWorker> { syncTask });
             Assert.That(TestVisualTask.executed, Is.True, "同步任务未执行");
             Assert.That(TestVisualTask.lastParam, Is.EqualTo("sync_value"), "同步任务参数传递错误");
             Assert.That(XFile.HasFile(XFile.PathJoin(TaskRunner.reportRoot, syncTask.ID.MD5())), Is.True, "同步任务结果缓存应当存在");
@@ -285,7 +287,7 @@ public class TestXEditorTasksPanel
             // 场景2：测试单个异步任务执行
             TestVisualTask.Reset();
             panel.taskArguments[asyncTask.ID] = new Dictionary<XEditor.Tasks.Param, string> { { asyncParam, "async_value" } };
-            panel.Run(new List<XEditor.Tasks.IWorker> { asyncTask });
+            await panel.Run(new List<XEditor.Tasks.IWorker> { asyncTask });
             Assert.That(TestVisualTask.executed, Is.True, "异步任务未执行");
             Assert.That(TestVisualTask.lastParam, Is.EqualTo("async_value"), "异步任务参数传递错误");
             Assert.That(XFile.HasFile(XFile.PathJoin(TaskRunner.reportRoot, asyncTask.ID.MD5())), Is.True, "异步任务结果缓存应当存在");
@@ -295,7 +297,7 @@ public class TestXEditorTasksPanel
             panel.taskArguments[syncTask.ID] = new Dictionary<XEditor.Tasks.Param, string> { { syncParam, "sync_multi" } };
             panel.taskArguments[asyncTask.ID] = new Dictionary<XEditor.Tasks.Param, string> { { asyncParam, "async_multi" } };
             var workers = new List<XEditor.Tasks.IWorker> { asyncTask, syncTask };
-            panel.Run(workers);
+            await panel.Run(workers);
             Assert.That(TestVisualTask.executed, Is.True, "多任务执行失败");
 
             // 验证异步任务的执行模式转换
@@ -307,7 +309,7 @@ public class TestXEditorTasksPanel
             syncParam.Persist = true;
             XPrefs.Asset.Set(syncParam.ID, "persist_value");
             panel.taskArguments.Remove(syncTask.ID); // 移除直接参数，强制使用持久化值
-            panel.Run(new List<XEditor.Tasks.IWorker> { syncTask });
+            await panel.Run(new List<XEditor.Tasks.IWorker> { syncTask });
             Assert.That(TestVisualTask.lastParam, Is.EqualTo("persist_value"), "持久化参数读取错误");
         }
         finally
@@ -322,6 +324,7 @@ public class TestXEditorTasksPanel
             XEditor.Tasks.Panel.Reset();
         }
     }
+#endif
     #endregion
 }
 #endif
