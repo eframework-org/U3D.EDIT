@@ -2,7 +2,7 @@
   "name": "org.eframework.u3d.edit",
   "displayName": "EFramework Editor for Unity",
   "description": "EFramework Editor for Unity 是一个编辑器扩展工具库，提供了任务系统、配置管理、事件系统、快速构建等功能，用于提高开发效率。",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "unity": "2021.3",
   "license": "MIT",
   "author": {
