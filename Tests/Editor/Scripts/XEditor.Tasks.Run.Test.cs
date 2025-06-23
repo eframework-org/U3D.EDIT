@@ -343,7 +343,7 @@ public class TestXEditorTasksRun
 
         // 测试Pre处理器异常中断
         LogAssert.Expect(LogType.Error, new Regex("Error occurred in"));
-        LogAssert.Expect(LogType.Error, new Regex("execute \\d+ phase\\(s\\) failed with \\d+ error\\(s\\)"));
+        LogAssert.Expect(LogType.Error, new Regex("execute \\d+ phase\\(s\\) with \\d+ error\\(s\\)"));
         TestPreProcessor1.panic = true;
         report = XEditor.Tasks.Execute(worker);
         report.Task.Wait();
@@ -361,7 +361,7 @@ public class TestXEditorTasksRun
 
         // 测试Post处理器异常
         LogAssert.Expect(LogType.Error, new Regex("Error occurred in"));
-        LogAssert.Expect(LogType.Error, new Regex("execute \\d+ phase\\(s\\) failed with \\d+ error\\(s\\)"));
+        LogAssert.Expect(LogType.Error, new Regex("execute \\d+ phase\\(s\\) with \\d+ error\\(s\\)"));
         report = XEditor.Tasks.Execute(worker);
         report.Task.Wait();
 

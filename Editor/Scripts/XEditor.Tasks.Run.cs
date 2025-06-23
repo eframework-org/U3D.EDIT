@@ -64,9 +64,9 @@ namespace EFramework.Editor
                     }
                     else
                     {
-                        XLog.Error("{0}: execute {1} phase(s) failed with {2} error(s), elapsed {3}, details: {4}",
+                        XLog.Error("{0}: execute {1} phase(s) with {2} error(s), elapsed {3}, details: {4}",
                             wtag,
-                            report.Phases.Count, report.Phases.Count(phase => !string.IsNullOrEmpty(phase.Error)),
+                            report.Phases.Count, report.Phases.Count(phase => !string.IsNullOrEmpty(phase.Error) || phase.Result == Result.Failed),
                             report.Elapsed < 60 ? $"{report.Elapsed}s" : $"{report.Elapsed / 60}min {report.Elapsed % 60}s",
                             stack);
                     }
