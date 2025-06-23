@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -610,6 +611,8 @@ namespace EFramework.Editor
                     taskExcutings.Add(worker.ID);
                 }
             }
+            Repaint(); // 主动刷新 GUI 面板的 Loading 状态
+            await Task.Yield(); // 等待 GUI 面板刷新完成
 
             // 执行任务
             foreach (var worker in workers)
@@ -632,6 +635,8 @@ namespace EFramework.Editor
 
                 // 移除正在执行的任务
                 taskExcutings.Remove(worker.ID);
+                Repaint(); // 主动刷新 GUI 面板的 Loading 状态
+                await Task.Yield(); // 等待 GUI 面板刷新完成
 
                 // 保存任务执行结果
                 var reportJson = XObject.ToJson(report, true);
