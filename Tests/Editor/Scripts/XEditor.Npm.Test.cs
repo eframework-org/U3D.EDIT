@@ -121,24 +121,20 @@ console.log(JSON.stringify({
         report.Task.Wait();
 
         // 验证执行结果
-        Assert.That(report.Result, Is.EqualTo(XEditor.Tasks.Result.Succeeded),
-            "NPM 任务应该成功执行完成");
+        Assert.That(report.Result, Is.EqualTo(XEditor.Tasks.Result.Succeeded), "NPM 任务应该成功执行完成。");
 
-        Assert.That(report.Extras, Is.Not.Null,
-            "任务报告的附加信息不应为空");
+        Assert.That(report.Extras, Is.Not.Null, "任务报告的附加信息不应为空。");
 
         var cmdResult = report.Extras as XEditor.Cmd.Result;
-        Assert.That(cmdResult, Is.Not.Null,
-            "任务报告应包含命令执行结果");
+        Assert.That(cmdResult, Is.Not.Null, "任务报告应包含命令执行结果。");
 
-        Assert.That(cmdResult.Data, Contains.Substring("\"args\":{"),
-            "输出应包含参数对象");
+        Assert.That(cmdResult.Data, Contains.Substring("\"args\":{"), "输出应包含参数对象。");
 
-        Assert.That(cmdResult.Data, Contains.Substring("\"param1\":\"value1\""),
-            "输出应包含第一个测试参数");
+        Assert.That(cmdResult.Data, Contains.Substring("\"param1\":\"value1\""), "输出应包含第一个测试参数。");
 
-        Assert.That(cmdResult.Data, Contains.Substring("\"param2\":\"value2\""),
-            "输出应包含第二个测试参数");
+        Assert.That(cmdResult.Data, Contains.Substring("\"param2\":\"value2\""), "输出应包含第二个测试参数。");
+
+        LogAssert.ignoreFailingMessages = false;
     }
 }
 #endif
