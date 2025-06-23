@@ -9,7 +9,6 @@ using System.Diagnostics;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 using EFramework.Utility;
@@ -226,7 +225,7 @@ namespace EFramework.Editor
                     Arguments = args != null && args.Length > 0 ? string.Join(" ", args) : ""
                 };
 
-                info.Environment.TryGetValue("PATH", out var path);
+                var path = Environment.GetEnvironmentVariable("PATH");
 #if !UNITY_EDITOR_WIN
                 path += Path.PathSeparator + "/usr/local/bin" + Path.PathSeparator + "/usr/local/share/dotnet";
 #endif
