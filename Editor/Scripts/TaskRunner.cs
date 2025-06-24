@@ -310,15 +310,18 @@ namespace EFramework.Editor
                         if (kvp.Status)
                         {
                             var worker = XEditor.Tasks.Workers[kvp.Key];
-                            if (workers.Contains(worker) == false)
+                            if (!workers.Contains(worker))
                             {
                                 uworkers.Add(worker);
                             }
                         }
                     }
-                    uworkers.Sort((e1, e2) => e1.Priority.CompareTo(e2.Priority));
-                    workers.AddRange(uworkers);
-                    Run(workers);
+                    if (uworkers.Count > 0)
+                    {
+                        uworkers.Sort((e1, e2) => e1.Priority.CompareTo(e2.Priority));
+                        workers.AddRange(uworkers);
+                    }
+                    _ = Run(workers);
                 });
             }
             EditorGUILayout.EndVertical();
@@ -355,7 +358,7 @@ namespace EFramework.Editor
                         {
                             var taskSelect = taskSelects.Find(ele => ele.Key == task);
                             if (taskSelect != null) taskSelect.Status = currentSelect;
-                            if (currentSelect == false) taskOrders.Remove(task);
+                            if (!currentSelect) taskOrders.Remove(task);
                         }
                     }
 
@@ -388,22 +391,26 @@ namespace EFramework.Editor
                                 if (tasks.Contains(kvp.Key))
                                 {
                                     var worker = XEditor.Tasks.Workers[kvp.Key];
-                                    if (workers.Contains(worker) == false)
+                                    if (!workers.Contains(worker))
                                     {
                                         uworkers.Add(worker);
                                     }
                                 }
                             }
-                            if (uworkers.Count == 0) // 未选中，则默认执行该分组的所有任务
+                            if (uworkers.Count > 0)
                             {
-                                foreach (var meta in tasks)
-                                {
-                                    uworkers.Add(XEditor.Tasks.Workers[meta]);
-                                }
+                                uworkers.Sort((e1, e2) => e1.Priority.CompareTo(e2.Priority));
+                                workers.AddRange(uworkers);
                             }
-                            uworkers.Sort((e1, e2) => e1.Priority.CompareTo(e2.Priority));
-                            workers.AddRange(uworkers);
-                            Run(workers);
+                            if (workers.Count == 0) // 未选中，则默认执行该分组的所有任务
+                            {
+                                foreach (var task in tasks)
+                                {
+                                    workers.Add(XEditor.Tasks.Workers[task]);
+                                }
+                                workers.Sort((e1, e2) => e1.Priority.CompareTo(e2.Priority));
+                            }
+                            _ = Run(workers);
                         });
                     }
                     EditorGUILayout.EndVertical();
@@ -486,7 +493,7 @@ namespace EFramework.Editor
                                         Event.current.Use();
                                         XLoom.RunInNext(() =>
                                         {
-                                            Run(new List<XEditor.Tasks.IWorker> { taskWorker });
+                                            _ = Run(new List<XEditor.Tasks.IWorker> { taskWorker });
                                         });
                                     }
                                 }
