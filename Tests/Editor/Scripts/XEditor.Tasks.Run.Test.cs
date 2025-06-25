@@ -22,13 +22,7 @@ public class TestXEditorTasksRun
     #region Test Class and Handlers
 
     /// <summary>
-    /// 测试用任务类
-    /// 
-    /// 功能特性
-    /// 1. 支持同步/异步执行配置
-    /// 2. 支持单例模式设置
-    /// 3. 包含Pre/Post处理器
-    /// 4. 支持自定义参数传递
+    /// TestTask 是测试用任务类。
     /// </summary>
     [XEditor.Tasks.Pre(typeof(TestPreHandler1))]
     [XEditor.Tasks.Pre(typeof(TestPreHandler2))]
@@ -50,7 +44,7 @@ public class TestXEditorTasksRun
     }
 
     /// <summary>
-    /// Pre处理器接口和实现类定义
+    /// Pre 处理器接口和实现类定义。
     /// PreHandler1: 优先级0，单例模式
     /// PreHandler2: 优先级1，非单例
     /// </summary>
@@ -102,7 +96,7 @@ public class TestXEditorTasksRun
     }
 
     /// <summary>
-    /// Post处理器接口和实现类定义
+    /// Post 处理器接口和实现类定义。
     /// PostHandler1: 优先级0，单例模式
     /// PostHandler2: 优先级1，非单例
     /// </summary>
@@ -168,18 +162,7 @@ public class TestXEditorTasksRun
     }
 
     /// <summary>
-    /// 测试同步任务执行
-    /// 
-    /// 验证内容：
-    /// 1. 任务在主线程执行
-    /// 2. 参数正确传递
-    /// 3. 执行结果正确返回
-    /// 
-    /// 执行流程：
-    /// 1. 创建同步任务实例
-    /// 2. 设置测试参数
-    /// 3. 执行任务
-    /// 4. 验证执行结果
+    /// Sync 测试同步任务执行。
     /// </summary>
     [Test]
     public void Sync()
@@ -205,18 +188,7 @@ public class TestXEditorTasksRun
     }
 
     /// <summary>
-    /// 测试异步任务执行
-    /// 
-    /// 验证内容：
-    /// 1. 任务在工作线程执行
-    /// 2. 异步执行成功完成
-    /// 3. 默认参数正确应用
-    /// 
-    /// 执行流程：
-    /// 1. 创建异步任务实例
-    /// 2. 执行任务
-    /// 3. 等待任务完成
-    /// 4. 验证执行结果
+    /// Async 测试异步任务执行。
     /// </summary>
     [Test]
     public void Async()
@@ -241,18 +213,7 @@ public class TestXEditorTasksRun
     }
 
     /// <summary>
-    /// 测试单例任务管理
-    /// 
-    /// 验证内容：
-    /// 1. 单例任务首次执行成功
-    /// 2. 重复执行时抛出异常
-    /// 3. 异常信息符合预期
-    /// 
-    /// 执行流程：
-    /// 1. 创建单例任务实例
-    /// 2. 首次执行任务
-    /// 3. 尝试重复执行
-    /// 4. 验证异常处理
+    /// Singleton 测试单例任务管理。
     /// </summary>
     [Test]
     public void Singleton()
@@ -279,24 +240,7 @@ public class TestXEditorTasksRun
     }
 
     /// <summary>
-    /// 测试处理器执行机制
-    /// 
-    /// 验证内容：
-    /// 1. 处理器执行时序（按Priority排序）
-    /// 2. 单例处理器实例管理
-    /// 3. Pre处理器错误中断后续执行
-    /// 4. Post处理器错误不影响执行完整性
-    /// 
-    /// 执行流程：
-    /// 1. 正常执行流程测试
-    ///    - 验证处理器执行顺序
-    ///    - 验证单例处理器状态
-    /// 2. Pre处理器错误测试
-    ///    - 触发Pre处理器错误
-    ///    - 验证执行中断
-    /// 3. Post处理器错误测试
-    ///    - 触发Post处理器错误
-    ///    - 验证错误处理
+    /// Handler 测试处理器执行机制。
     /// </summary>
     [Test]
     public void Handler()
@@ -375,21 +319,7 @@ public class TestXEditorTasksRun
 
 #if UNITY_6000_0_OR_NEWER
     /// <summary>
-    /// 测试批处理任务执行
-    /// 
-    /// 验证内容：
-    /// 1. 命令行参数解析
-    /// 2. 任务查找和执行
-    /// 3. 参数读取优先级（命令行 > XPrefs > 默认值）
-    /// 4. 结果输出处理
-    /// 
-    /// 测试场景：
-    /// - Single: 单任务执行
-    /// - Mixed: 混合同步异步任务
-    /// - Sync: 全同步任务
-    /// - Async: 全异步任务
-    /// - Nonexist: 不存在的任务
-    /// - Params: 参数优先级
+    /// Batch 测试批处理任务执行。
     /// </summary>
     [TestCase("Single")]
     [TestCase("Mixed")]
@@ -617,6 +547,6 @@ public class TestXEditorTasksRun
         }
     }
 #endif
-    #endregion
+#endregion
 }
 #endif

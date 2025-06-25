@@ -709,6 +709,8 @@ namespace EFramework.Editor
             /// </remarks>
             public virtual void OnGUI()
             {
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
                 searchStr = EditorGUILayout.TextField(searchStr, EditorStyles.toolbarSearchField);
 
                 var root = XFile.PathJoin(Root, XEnv.Channel, XEnv.Platform.ToString());
@@ -769,6 +771,8 @@ namespace EFramework.Editor
                         }
                         GUILayout.EndHorizontal();
                     }
+
+                    EditorGUILayout.EndVertical();
                 }
             }
             #endregion

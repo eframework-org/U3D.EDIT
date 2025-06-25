@@ -14,32 +14,6 @@ using EFramework.Utility;
 /// <summary>
 /// XEditor.Tasks.Panel 模块的单元测试类。
 /// </summary>
-/// <remarks>
-/// <code>
-/// 测试范围
-/// 1. 面板数据管理
-///    - 数据结构重置
-///    - 任务分组排序
-///    - 状态持久化处理
-/// 
-/// 2. 生命周期管理
-///    - OnEnable 回调处理
-///    - OnDisable 回调处理
-///    - OnDestroy 回调处理
-/// 
-/// 3. 任务执行机制
-///    - 同步任务执行
-///    - 异步任务执行
-///    - 多任务混合执行
-///    - 参数传递机制
-/// 
-/// 测试策略
-/// 1. 隔离测试：每个测试用例独立运行，不互相影响
-/// 2. 环境清理：测试前后恢复系统状态
-/// 3. 异常处理：验证错误场景的处理
-/// 4. 状态验证：确保所有状态变更符合预期
-/// </code>
-/// </remarks>
 public class TestXEditorTasksPanel
 {
     #region Test Class and Handlers
@@ -47,19 +21,6 @@ public class TestXEditorTasksPanel
     /// <summary>
     /// 测试用任务类，用于验证面板功能。
     /// </summary>
-    /// <remarks>
-    /// 功能特性
-    /// - 实现所有面板回调接口
-    /// - 记录回调执行状态
-    /// - 提供参数传递验证
-    /// - 支持执行状态跟踪
-    /// 
-    /// 使用方式
-    /// 1. 创建实例并配置
-    /// 2. 注册到任务系统
-    /// 3. 执行相关测试
-    /// 4. 验证执行结果
-    /// </remarks>
     public class TestVisualTask : XEditor.Tasks.Worker,
         XEditor.Tasks.Panel.IOnEnable,
         XEditor.Tasks.Panel.IOnGUI,
@@ -68,14 +29,19 @@ public class TestXEditorTasksPanel
     {
         /// <summary>OnEnable 回调是否被调用</summary>
         internal static bool onEnableCalled;
+
         /// <summary>OnGUI 回调是否被调用</summary>
         internal static bool onGUICalled;
+
         /// <summary>OnDisable 回调是否被调用</summary>
         internal static bool onDisableCalled;
+
         /// <summary>OnDestroy 回调是否被调用</summary>
         internal static bool onDestroyCalled;
+
         /// <summary>最后接收到的参数值</summary>
         internal static string lastParam;
+
         /// <summary>任务是否被执行</summary>
         internal static bool executed;
 
@@ -83,11 +49,6 @@ public class TestXEditorTasksPanel
         /// 任务处理逻辑。
         /// </summary>
         /// <param name="report">任务执行报告，包含参数和状态信息</param>
-        /// <remarks>
-        /// 执行步骤：
-        /// 1. 记录执行状态
-        /// 2. 保存接收到的参数
-        /// </remarks>
         public override void Process(XEditor.Tasks.Report report)
         {
             executed = true;
@@ -99,20 +60,16 @@ public class TestXEditorTasksPanel
 
         // 面板生命周期回调实现
         void XEditor.Tasks.Panel.IOnEnable.OnEnable() { onEnableCalled = true; }
+
         void XEditor.Tasks.Panel.IOnGUI.OnGUI() { onGUICalled = true; }
+
         void XEditor.Tasks.Panel.IOnDisable.OnDisable() { onDisableCalled = true; }
+
         void XEditor.Tasks.Panel.IOnDestroy.OnDestroy() { onDestroyCalled = true; }
 
         /// <summary>
         /// 重置所有静态状态。
         /// </summary>
-        /// <remarks>
-        /// 在每个测试用例执行前调用，确保测试环境的干净。
-        /// 重置内容：
-        /// - 回调状态标记
-        /// - 参数记录
-        /// - 执行状态标记
-        /// </remarks>
         internal static void Reset()
         {
             onEnableCalled = false;

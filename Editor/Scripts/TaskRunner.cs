@@ -275,8 +275,25 @@ namespace EFramework.Editor
                 foldoutAll = !foldoutAll;
                 foreach (var tasks in taskGroups)
                 {
-                    groupFoldouts.Add(new Stateful { Key = XEditor.Tasks.Metas[tasks[0]].Name, Status = foldoutAll });
-                    foreach (var task in tasks) taskFoldouts.Add(new Stateful { Key = task, Status = foldoutAll });
+                    var groupMeta = XEditor.Tasks.Metas[tasks[0]];
+                    var groupFoldout = groupFoldouts.Find(ele => ele.Key == groupMeta.Group);
+                    if (groupFoldout == null)
+                    {
+                        groupFoldout = new Stateful { Key = groupMeta.Group };
+                        groupFoldouts.Add(groupFoldout);
+                    }
+                    groupFoldout.Status = foldoutAll;
+
+                    foreach (var task in tasks)
+                    {
+                        var taskFoldout = taskFoldouts.Find(ele => ele.Key == task);
+                        if (taskFoldout == null)
+                        {
+                            taskFoldout = new Stateful { Key = task };
+                            taskFoldouts.Add(taskFoldout);
+                        }
+                        taskFoldout.Status = foldoutAll;
+                    }
                 }
             }
             GUILayout.EndVertical();
@@ -369,7 +386,22 @@ namespace EFramework.Editor
                         groupFoldout = new Stateful { Key = groupMeta.Group };
                         groupFoldouts.Add(groupFoldout);
                     }
-                    groupFoldout.Status = EditorGUI.Foldout(groupFoldoutRect, groupFoldout.Status, new GUIContent(groupMeta.Group, string.Join(", ", tasks)));
+                    var lastFoldout = groupFoldout.Status;
+                    var currentFoldout = EditorGUI.Foldout(groupFoldoutRect, groupFoldout.Status, new GUIContent(groupMeta.Group, string.Join(", ", tasks)));
+                    if (lastFoldout != currentFoldout)
+                    {
+                        groupFoldout.Status = currentFoldout;
+                        foreach (var task in tasks)
+                        {
+                            var taskFoldout = taskFoldouts.Find(ele => ele.Key == task);
+                            if (taskFoldout == null)
+                            {
+                                taskFoldout = new Stateful { Key = task };
+                                taskFoldouts.Add(taskFoldout);
+                            }
+                            taskFoldout.Status = currentFoldout;
+                        }
+                    }
 
                     GUILayout.FlexibleSpace();
                     EditorGUILayout.BeginVertical();
@@ -461,6 +493,9 @@ namespace EFramework.Editor
                                 taskFoldout.Status = EditorGUI.Foldout(taskFoldoutRect, taskFoldout.Status, new GUIContent(taskMeta.Name + sidx, taskMeta.Tooltip));
                                 GUILayout.FlexibleSpace();
 
+                                EditorGUILayout.BeginVertical();
+                                GUILayout.Space(2);
+                                EditorGUILayout.BeginHorizontal();
                                 if (taskExcutings.Contains(task)) GUILayout.Button(EditorGUIUtility.IconContent("Loading@2x"), EditorStyles.iconButton);
                                 else
                                 {
@@ -497,14 +532,19 @@ namespace EFramework.Editor
                                         });
                                     }
                                 }
+                                EditorGUILayout.EndHorizontal();
+                                EditorGUILayout.EndVertical();
+
                                 GUILayout.EndHorizontal();
 
                                 if (taskFoldout.Status)
                                 {
                                     taskArguments.TryGetValue(task, out var marguments);
 
+                                    var draw = false;
                                     if (taskMeta.Params != null && taskMeta.Params.Count > 0)
                                     {
+                                        draw = true;
                                         if (marguments == null)
                                         {
                                             marguments = new Dictionary<XEditor.Tasks.Param, string>();
@@ -529,14 +569,19 @@ namespace EFramework.Editor
 
                                     if (taskMeta.Worker != null && typeof(XEditor.Tasks.Panel.IOnGUI).IsAssignableFrom(taskMeta.Worker))
                                     {
+                                        draw = true;
                                         try
                                         {
-                                            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                                             try { (taskWorker as XEditor.Tasks.Panel.IOnGUI).OnGUI(); }
                                             catch (Exception e) { XLog.Panic(e); }
-                                            EditorGUILayout.EndVertical();
                                         }
                                         catch (Exception e) { XLog.Panic(e); }
+                                    }
+
+                                    if (!draw)
+                                    {
+                                        // 绘制一个空的提示，避免无 GUI 变化，影响用户体验
+                                        EditorGUILayout.HelpBox("No Params or GUI Panel.", MessageType.None);
                                     }
                                 }
                                 EditorGUILayout.EndVertical();
