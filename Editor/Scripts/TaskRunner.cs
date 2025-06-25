@@ -462,7 +462,7 @@ namespace EFramework.Editor
                                 EditorGUILayout.BeginHorizontal();
 
                                 EditorGUILayout.BeginVertical(GUILayout.MaxWidth(15));
-                                GUILayout.Space(4);
+                                GUILayout.Space(6);
                                 var taskSelect = taskSelects.Find(ele => ele.Key == task);
                                 if (taskSelect == null)
                                 {
