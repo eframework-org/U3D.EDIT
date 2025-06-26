@@ -771,9 +771,9 @@ namespace EFramework.Editor
                         }
                         GUILayout.EndHorizontal();
                     }
-
-                    EditorGUILayout.EndVertical();
                 }
+
+                EditorGUILayout.EndVertical();
             }
             #endregion
         }
