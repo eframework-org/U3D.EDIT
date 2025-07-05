@@ -284,16 +284,17 @@ namespace EFramework.Editor
                     }
                     groupFoldout.Status = foldoutAll;
 
-                    foreach (var task in tasks)
-                    {
-                        var taskFoldout = taskFoldouts.Find(ele => ele.Key == task);
-                        if (taskFoldout == null)
-                        {
-                            taskFoldout = new Stateful { Key = task };
-                            taskFoldouts.Add(taskFoldout);
-                        }
-                        taskFoldout.Status = foldoutAll;
-                    }
+                    // 体验优化：不控制 task 级别的折叠
+                    // foreach (var task in tasks)
+                    // {
+                    //     var taskFoldout = taskFoldouts.Find(ele => ele.Key == task);
+                    //     if (taskFoldout == null)
+                    //     {
+                    //         taskFoldout = new Stateful { Key = task };
+                    //         taskFoldouts.Add(taskFoldout);
+                    //     }
+                    //     taskFoldout.Status = foldoutAll;
+                    // }
                 }
             }
             GUILayout.EndVertical();
@@ -391,16 +392,17 @@ namespace EFramework.Editor
                     if (lastFoldout != currentFoldout)
                     {
                         groupFoldout.Status = currentFoldout;
-                        foreach (var task in tasks)
-                        {
-                            var taskFoldout = taskFoldouts.Find(ele => ele.Key == task);
-                            if (taskFoldout == null)
-                            {
-                                taskFoldout = new Stateful { Key = task };
-                                taskFoldouts.Add(taskFoldout);
-                            }
-                            taskFoldout.Status = currentFoldout;
-                        }
+                        // 体验优化：不控制 task 级别的折叠
+                        // foreach (var task in tasks)
+                        // {
+                        //     var taskFoldout = taskFoldouts.Find(ele => ele.Key == task);
+                        //     if (taskFoldout == null)
+                        //     {
+                        //         taskFoldout = new Stateful { Key = task };
+                        //         taskFoldouts.Add(taskFoldout);
+                        //     }
+                        //     taskFoldout.Status = currentFoldout;
+                        // }
                     }
 
                     GUILayout.FlexibleSpace();
