@@ -16,7 +16,6 @@ using UnityEditor.Build.Profile;
 #endif
 using UnityEditor.Build.Reporting;
 using EFramework.Utility;
-using System.Runtime.InteropServices;
 
 namespace EFramework.Editor
 {
@@ -101,24 +100,24 @@ namespace EFramework.Editor
         public partial class Binary : Tasks.Worker, Tasks.Panel.IOnGUI, Event.Internal.OnPreprocessBuild
         {
             /// <summary>
-            /// 用于标记构建输出根目录路径属性的特性。
+            /// RootAttribute 用于标记构建输出根目录路径属性的特性。
             /// 被此特性标记的静态属性将被用作构建输出根目录路径。
             /// </summary>
             [AttributeUsage(AttributeTargets.Property)]
             public class RootAttribute : Attribute { }
 
             /// <summary>
-            /// 标记是否已初始化构建输出根目录路径。
+            /// root 标记是否已初始化构建输出根目录路径。
             /// </summary>
             internal static bool root;
 
             /// <summary>
-            /// 存储构建输出根目录路径属性信息。
+            /// rootProp 存储构建输出根目录路径属性信息。
             /// </summary>
             internal static PropertyInfo rootProp;
 
             /// <summary>
-            /// 获取构建输出根目录路径。
+            /// Root 获取构建输出根目录路径。
             /// </summary>
             /// <returns>如果未通过 <see cref="RootAttribute"/> 自定义,则返回默认路径：项目目录/Builds/Binary</returns>
             public static string Root { get => Const.GetCoustom<RootAttribute, string>(ref root, ref rootProp, XFile.PathJoin(XEnv.ProjectPath, "Builds", "Binary")); }
@@ -126,38 +125,38 @@ namespace EFramework.Editor
             #region 构建参数
 #if UNITY_6000_0_OR_NEWER
             /// <summary>
-            /// 构建配置文件。
+            /// ProfileFile 是构建的配置文件。
             /// </summary>
             [Tasks.Param(name: "Profile", tooltip: "Build Profile.", persist: true)]
             protected string ProfileFile;
 #endif
 
             /// <summary>
-            /// 安卓证书文件。
+            /// KeystoreName 是安卓的证书文件。
             /// </summary>
             [Tasks.Param(name: "KeyName", tooltip: "Android Keystore Name.", persist: true, platform: XEnv.PlatformType.Android)]
             protected string KeystoreName;
 
             /// <summary>
-            /// 安卓证书密钥。
+            /// KeystorePass 是安卓的证书密钥。
             /// </summary>
             [Tasks.Param(name: "KeyPass", tooltip: "Android Keystore Pass.", persist: true, platform: XEnv.PlatformType.Android)]
             protected string KeystorePass;
 
             /// <summary>
-            /// 安卓签名别名。
+            /// KeyaliasName 是安卓的签名别名。
             /// </summary>
             [Tasks.Param(name: "AliasName", tooltip: "Android Keyalias Name.", persist: true, platform: XEnv.PlatformType.Android)]
             protected string KeyaliasName;
 
             /// <summary>
-            /// 安卓签名密钥。
+            /// KeyaliasPass 是安卓的签名密钥。
             /// </summary>
             [Tasks.Param(name: "AliasPass", tooltip: "Android Keyalias Pass.", persist: true, platform: XEnv.PlatformType.Android)]
             protected string KeyaliasPass;
 
             /// <summary>
-            /// iOS 签名证书。
+            /// SigningTeam 是 iOS 的签名证书。
             /// </summary>
             [Tasks.Param(name: "Signing", tooltip: "iOS Signing Team.", persist: true, platform: XEnv.PlatformType.iOS)]
             protected string SigningTeam;
@@ -165,79 +164,79 @@ namespace EFramework.Editor
 
 #if UNITY_6000_0_OR_NEWER
             /// <summary>
-            /// 上一次使用的构建配置。
+            /// lastProfile 是上一次使用的构建配置。
             /// </summary>
             protected BuildProfile lastProfile;
 
             /// <summary>
-            /// 当前使用的构建配置。
+            /// profile 是当前使用的构建配置。
             /// </summary>
             protected BuildProfile profile;
 
             /// <summary>
-            /// 获取当前构建配置。
+            /// Profile 获取当前构建配置。
             /// </summary>
             /// <returns>当前正在使用的 BuildProfile 配置</returns>
             protected virtual BuildProfile Profile { get => profile; }
 #endif
 
             /// <summary>
-            /// 构建输出目录。
+            /// output 是构建的输出目录。
             /// </summary>
             private string output;
 
             /// <summary>
-            /// 获取构建输出目录。
+            /// Output 获取构建输出目录。
             /// </summary>
             /// <returns>构建文件的输出目录路径</returns>
             public virtual string Output { get => output; }
 
             /// <summary>
-            /// 构建名称。
+            /// name 是构建的名称。
             /// </summary>
             protected string name;
 
             /// <summary>
-            /// 获取构建名称。
+            /// Name 获取构建的名称。
             /// </summary>
             /// <returns>当前构建的名称</returns>
             public virtual string Name { get => name; }
 
             /// <summary>
-            /// 构建版本号。
+            /// code 是构建的版本号。
             /// </summary>
             private string code;
 
             /// <summary>
-            /// 获取构建版本号。
+            /// Code 获取构建的版本号。
             /// </summary>
             /// <returns>当前构建的版本号</returns>
             public virtual string Code { get => code; }
 
             /// <summary>
-            /// 构建输出文件。
+            /// file 是构建的输出文件。
             /// </summary>
             private string file;
 
             /// <summary>
-            /// 获取构建输出文件。
+            /// File 获取构建的输出文件。
             /// </summary>
             /// <returns>构建输出的目标文件路径</returns>
             public virtual string File { get => file; }
 
             /// <summary>
-            /// 构建选项。
+            /// options 是构建的选项。
             /// </summary>
             private BuildOptions options;
 
             /// <summary>
-            /// 获取构建选项。
+            /// Options 获取构建的选项。
             /// </summary>
             /// <returns>当前构建使用的 BuildOptions 选项</returns>
             public virtual BuildOptions Options { get => options; }
 
             /// <summary>
-            /// 获取构建场景列表。
+            /// Scenes 获取构建的场景列表。
             /// </summary>
             /// <returns>优先使用 BuildProfile 中配置的场景,如果没有配置则使用 EditorBuildSettings 中的场景</returns>
             public virtual string[] Scenes
@@ -258,16 +257,15 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 获取构建定义符号列表。
+            /// Defines 获取构建的定义符号列表。
             /// </summary>
             /// <returns>构建时使用的预处理器定义符号列表</returns>
             public virtual string[] Defines { get; }
 
             /// <summary>
-            /// 构建预处理回调。
+            /// Process 是系统内置的构建预处理回调，用于在构建开始前设置定义符号。
             /// </summary>
             /// <param name="args">构建报告参数</param>
-            /// <remarks>用于在构建开始前设置定义符号</remarks>
             void Event.Internal.OnPreprocessBuild.Process(params object[] args)
             {
                 if (Defines == null || Defines.Length == 0) return;
@@ -284,15 +282,9 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 构建预处理阶段。
+            /// Preprocess 是构建的预处理，用于准备构建环境。
             /// </summary>
             /// <param name="report">处理报告</param>
-            /// <remarks>
-            /// 执行以下操作：
-            /// - 设置构建参数
-            /// - 配置构建选项
-            /// - 准备构建环境
-            /// </remarks>
             public override void Preprocess(Tasks.Report report)
             {
                 #region 构建参数
@@ -316,7 +308,7 @@ namespace EFramework.Editor
 #endif
 
                 // 构建选项
-                options = BuildOptions.None; // 重置配置
+                options = BuildOptions.None; // 重置配置项
                 if (Options != BuildOptions.None) options = Options;
                 else
                 {
@@ -338,7 +330,7 @@ namespace EFramework.Editor
                 }
 
                 // 构建路径
-                output = string.Empty; // 重置配置
+                output = string.Empty; // 重置配置项
                 if (!string.IsNullOrEmpty(Output)) output = Output;
                 else output = XFile.PathJoin(Root, XEnv.Channel, XEnv.Platform.ToString());
                 if (!XFile.HasDirectory(output)) XFile.CreateDirectory(output);
@@ -347,20 +339,17 @@ namespace EFramework.Editor
                 var max = 1;
                 var datetime = DateTime.Now.ToString("yyyyMMdd");
                 var di = new DirectoryInfo(output);
-                var isf = true;
                 FileSystemInfo[] fis = di.GetFiles().Where(f => f.Name != ".DS_Store").ToArray();
-                if (fis.Length == 0)
-                {
-                    isf = false;
-                    fis = di.GetDirectories();
-                }
+                if (fis.Length == 0) fis = di.GetDirectories();
                 if (fis != null && fis.Length > 0)
                 {
                     for (var i = 0; i < fis.Length; i++)
                     {
                         var file = fis[i];
                         if (file == null) continue;
-                        var name = isf ? Path.GetFileNameWithoutExtension(file.Name) : file.Name;
+                        var name = file is DirectoryInfo ?
+                            Path.GetFileNameWithoutExtension((file as DirectoryInfo).Name) :
+                            Path.GetFileNameWithoutExtension((file as FileInfo).Name);
                         if (string.IsNullOrEmpty(name)) continue;
                         var buildIndex = name.LastIndexOf("-");
                         if (buildIndex == -1) continue;
@@ -374,7 +363,7 @@ namespace EFramework.Editor
                     }
                 }
 
-                name = string.Empty; // 重置配置
+                name = string.Empty; // 重置配置项
                 if (!string.IsNullOrEmpty(Name)) name = Name;
                 else
                 {
@@ -391,19 +380,19 @@ namespace EFramework.Editor
                         max);
                 }
 
-                code = string.Empty; // 重置配置
+                code = string.Empty; // 重置配置项
                 if (!string.IsNullOrEmpty(Code)) code = Code;
                 else code = datetime + max;
 
                 // 构建文件
-                file = string.Empty; // 重置配置
+                file = string.Empty; // 重置配置项
                 if (!string.IsNullOrEmpty(File)) file = File;
                 else
                 {
                     if (XEnv.Platform == XEnv.PlatformType.Android) file = XFile.PathJoin(output, Name + ".apk");
                     else if (XEnv.Platform == XEnv.PlatformType.Windows) file = XFile.PathJoin(output, Name, Name + ".exe");
                     else if (XEnv.Platform == XEnv.PlatformType.Linux) file = XFile.PathJoin(output, Name, Name + ".bin");
-                    else if (XEnv.Platform == XEnv.PlatformType.macOS) file = XFile.PathJoin(output, Name, Name + ".app");
+                    else if (XEnv.Platform == XEnv.PlatformType.macOS) file = XFile.PathJoin(output, Name + ".app");
                     else file = XFile.PathJoin(output, Name);
                 }
                 #endregion
@@ -433,12 +422,15 @@ namespace EFramework.Editor
 #if UNITY_EDITOR_WIN
                 UnityEditor.WindowsStandalone.UserBuildSettings.createSolution = false;
 #endif
+
 #if UNITY_EDITOR_OSX
                 UnityEditor.OSXStandalone.UserBuildSettings.createXcodeProject = false;
 #endif
+
 #if TUANJIE_2022
                 EditorUserBuildSettings.exportAsOpenHarmonyProject = false;
 #endif
+
 #if UNITY_ANDROID
 #if UNITY_6000_0_OR_NEWER
                 UnityEditor.Android.UserBuildSettings.DebugSymbols.level = Unity.Android.Types.DebugSymbolLevel.Full;
@@ -452,8 +444,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 构建处理阶段。
-            /// 执行构建操作、处理构建结果、备份符号表。
+            /// Process 是构建的处理阶段，执行构建操作，处理构建结果，备份符号表等操作。
             /// </summary>
             /// <param name="report">处理报告</param>
             public override void Process(Tasks.Report report)
@@ -486,7 +477,7 @@ namespace EFramework.Editor
                 var brustDst = XFile.PathJoin(symbolPath, "BurstDebugInformation_DoNotShip");
                 var symbolSrc = "";
                 var symbolDst = XFile.PathJoin(symbolPath, "BackUpThisFolder_ButDontShipItWithYourGame");
-                if (XEnv.Platform == XEnv.PlatformType.Windows || XEnv.Platform == XEnv.PlatformType.Linux || XEnv.Platform == XEnv.PlatformType.macOS)
+                if (XEnv.Platform == XEnv.PlatformType.Windows || XEnv.Platform == XEnv.PlatformType.Linux)
                 {
                     var temp = XFile.PathJoin(Output, Name);
                     if (XFile.HasDirectory(temp))
@@ -501,14 +492,25 @@ namespace EFramework.Editor
                                 break;
                             }
                         }
+
                         brustSrc = XFile.PathJoin(Output, Name, bin + "_BurstDebugInformation_DoNotShip");
                         if (!XFile.HasDirectory(brustSrc))
                         {
-                            // Unity6首次编译brust的目录为 product_xxx
+                            // Unity6 首次编译 brust 的目录为 product_xxx
                             brustSrc = XFile.PathJoin(Output, Name, Application.productName + "_BurstDebugInformation_DoNotShip");
                         }
                         symbolSrc = XFile.PathJoin(Output, Name, bin + "_BackUpThisFolder_ButDontShipItWithYourGame");
                     }
+                }
+                else if (XEnv.Platform == XEnv.PlatformType.macOS)
+                {
+                    brustSrc = XFile.PathJoin(Output, Name + "_BurstDebugInformation_DoNotShip");
+                    if (!XFile.HasDirectory(brustSrc))
+                    {
+                        // Unity6 首次编译 brust 的目录为 product_xxx
+                        brustSrc = XFile.PathJoin(Output, Application.productName + "_BurstDebugInformation_DoNotShip");
+                    }
+                    symbolSrc = XFile.PathJoin(Output, Name + "_BackUpThisFolder_ButDontShipItWithYourGame");
                 }
                 else if (XEnv.Platform == XEnv.PlatformType.Android)
                 {
@@ -516,7 +518,7 @@ namespace EFramework.Editor
                     brustSrc = XFile.PathJoin(Output, bin + "_BurstDebugInformation_DoNotShip");
                     if (!XFile.HasDirectory(brustSrc))
                     {
-                        // Unity6首次编译brust的目录为product_xxx
+                        // Unity6 首次编译 brust 的目录为 product_xxx
                         brustSrc = XFile.PathJoin(Output, Application.productName + "_BurstDebugInformation_DoNotShip");
                     }
                     symbolSrc = XFile.PathJoin(Output, bin + "_BackUpThisFolder_ButDontShipItWithYourGame");
@@ -526,7 +528,7 @@ namespace EFramework.Editor
                         var f = files[i];
                         if (f.Contains(Name) && f.EndsWith("symbols.zip"))
                         {
-                            if (XFile.HasDirectory(symbolPath) == false) XFile.CreateDirectory(symbolPath);
+                            if (!XFile.HasDirectory(symbolPath)) XFile.CreateDirectory(symbolPath);
                             XFile.CopyFile(f, XFile.PathJoin(symbolPath, Path.GetFileName(f)));
                             XFile.DeleteFile(f);
                             break;
@@ -535,7 +537,7 @@ namespace EFramework.Editor
                 }
                 if (XFile.HasDirectory(brustSrc) || XFile.HasDirectory(symbolSrc))
                 {
-                    if (XFile.HasDirectory(symbolPath) == false) XFile.CreateDirectory(symbolPath);
+                    if (!XFile.HasDirectory(symbolPath)) XFile.CreateDirectory(symbolPath);
 
                     if (XFile.HasFile(symbolZip)) XFile.DeleteFile(symbolZip);
                     if (XFile.HasDirectory(brustSrc))
@@ -556,8 +558,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 构建后处理阶段。
-            /// 恢复构建配置。
+            /// Postprocess 是构建的后处理阶段，用于恢复构建配置。
             /// </summary>
             /// <param name="report">处理报告</param>
             public override void Postprocess(Tasks.Report report)
@@ -580,17 +581,17 @@ namespace EFramework.Editor
 
             #region 显示面板
             /// <summary>
-            /// 构建文件搜索关键字。
+            /// searchStr 是构建文件的搜索关键字。
             /// </summary>
             protected string searchStr = "";
 
             /// <summary>
-            /// 是否正在安装。
+            /// installing 表示是否正在安装。
             /// </summary>
             protected bool installing;
 
             /// <summary>
-            /// 运行指定的构建文件。
+            /// Run 运行指定的构建文件。
             /// </summary>
             /// <param name="path">构建文件路径,默认为当前构建文件路径</param>
             /// <param name="name">构建文件名称,默认为当前构建名称</param>
@@ -605,7 +606,7 @@ namespace EFramework.Editor
                 {
                     var bin = "";
                     if (XFile.HasFile(path) || XFile.HasDirectory(path)) bin = path;
-                    else
+                    else if (XEnv.Platform == XEnv.PlatformType.Windows || XEnv.Platform == XEnv.PlatformType.Linux)
                     {
                         var dirs = Directory.GetDirectories(path);
                         foreach (var dir in dirs)
@@ -613,29 +614,16 @@ namespace EFramework.Editor
                             if (dir.EndsWith("_Data"))
                             {
                                 bin = Path.GetFileName(dir).Replace("_Data", "");
+                                break;
                             }
                         }
-                        if (XEnv.Platform == XEnv.PlatformType.macOS)
+                        var files = Directory.GetFiles(path);
+                        foreach (var file in files)
                         {
-                            foreach (var dir in dirs)
+                            if (Path.GetFileNameWithoutExtension(file) == bin)
                             {
-                                if (Path.GetFileNameWithoutExtension(dir) == bin)
-                                {
-                                    bin = file;
-                                    break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            var files = Directory.GetFiles(path);
-                            foreach (var file in files)
-                            {
-                                if (Path.GetFileNameWithoutExtension(file) == bin)
-                                {
-                                    bin = file;
-                                    break;
-                                }
+                                bin = file;
+                                break;
                             }
                         }
                     }
@@ -696,15 +684,8 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 绘制构建面板。
+            /// OnGUI 绘制构建面板。
             /// </summary>
-            /// <remarks>
-            /// 提供以下功能：
-            /// - 构建文件搜索
-            /// - 文件重命名
-            /// - 运行构建文件
-            /// - 打开目录功能
-            /// </remarks>
             public virtual void OnGUI()
             {
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
@@ -745,21 +726,39 @@ namespace EFramework.Editor
                             {
                                 var dst = XFile.PathJoin(root, str);
                                 var ext = Path.GetExtension(path);
-                                if (dst.EndsWith(ext) == false) dst += ext;
+                                if (!dst.EndsWith(ext)) dst += ext;
                                 if (XFile.HasFile(dst)) XFile.HasFile(dst);
                                 XFile.CopyFile(path, dst);
                                 XFile.DeleteFile(path);
                             }
                             else
                             {
+                                // Windows && Linux && macOS
                                 var dst = XFile.PathJoin(root, str);
                                 if (XFile.HasDirectory(dst)) XFile.DeleteDirectory(dst);
                                 XFile.CopyDirectory(path, dst);
                                 XFile.DeleteDirectory(path);
-                                XFile.CopyDirectory(XFile.PathJoin(dst, name + "_Data/"), XFile.PathJoin(dst, str + "_Data/"));
-                                XFile.DeleteDirectory(XFile.PathJoin(dst, name + "_Data/"));
-                                XFile.CopyFile(XFile.PathJoin(dst, name + ".exe"), XFile.PathJoin(dst, str + ".exe"));
-                                XFile.DeleteFile(XFile.PathJoin(dst, name + ".exe"));
+
+                                // Windows && Linux
+                                if (XFile.HasDirectory(XFile.PathJoin(dst, name + "_Data/")))
+                                {
+                                    XFile.CopyDirectory(XFile.PathJoin(dst, name + "_Data/"), XFile.PathJoin(dst, str + "_Data/"));
+                                    XFile.DeleteDirectory(XFile.PathJoin(dst, name + "_Data/"));
+                                }
+
+                                // Windows
+                                if (XFile.HasFile(XFile.PathJoin(dst, name + ".exe")))
+                                {
+                                    XFile.CopyFile(XFile.PathJoin(dst, name + ".exe"), XFile.PathJoin(dst, str + ".exe"));
+                                    XFile.DeleteFile(XFile.PathJoin(dst, name + ".exe"));
+                                }
+
+                                // Linux
+                                if (XFile.HasFile(XFile.PathJoin(dst, name + ".bin")))
+                                {
+                                    XFile.CopyFile(XFile.PathJoin(dst, name + ".bin"), XFile.PathJoin(dst, str + ".bin"));
+                                    XFile.DeleteFile(XFile.PathJoin(dst, name + ".bin"));
+                                }
                             }
                         }
                         if (GUILayout.Button(new GUIContent("Path", $"Show {name} in explorer"))) Utility.ShowInExplorer(path);
