@@ -605,28 +605,33 @@ namespace EFramework.Editor
                     XEnv.Platform == XEnv.PlatformType.macOS)
                 {
                     var bin = "";
-                    if (XFile.HasFile(path) || XFile.HasDirectory(path)) bin = path;
-                    else if (XEnv.Platform == XEnv.PlatformType.Windows || XEnv.Platform == XEnv.PlatformType.Linux)
+                    if (XEnv.Platform == XEnv.PlatformType.Windows || XEnv.Platform == XEnv.PlatformType.Linux)
                     {
-                        var dirs = Directory.GetDirectories(path);
-                        foreach (var dir in dirs)
+                        if (XFile.HasFile(path)) bin = path;
+                        else
                         {
-                            if (dir.EndsWith("_Data"))
+                            var dirs = Directory.GetDirectories(path);
+                            foreach (var dir in dirs)
                             {
-                                bin = Path.GetFileName(dir).Replace("_Data", "");
-                                break;
+                                if (dir.EndsWith("_Data"))
+                                {
+                                    bin = Path.GetFileName(dir).Replace("_Data", "");
+                                    break;
+                                }
                             }
-                        }
-                        var files = Directory.GetFiles(path);
-                        foreach (var file in files)
-                        {
-                            if (Path.GetFileNameWithoutExtension(file) == bin)
+                            var files = Directory.GetFiles(path);
+                            foreach (var file in files)
                             {
-                                bin = file;
-                                break;
+                                if (Path.GetFileNameWithoutExtension(file) == bin)
+                                {
+                                    bin = file;
+                                    break;
+                                }
                             }
                         }
                     }
+                    else bin = path; // macOS 的可执行文件为 *.app，实质上是一个目录
+
                     if (!XFile.HasFile(bin) && !XFile.HasDirectory(bin))
                     {
                         XLog.Error("XEditor.Binary.Run: cannot found executable file: {0}.", path);
