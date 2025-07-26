@@ -22,7 +22,7 @@ public class TestXEditorTasksInit
     /// <summary>
     /// 测试任务 1：基本任务配置测试。
     /// </summary>
-    [XEditor.Tasks.Worker(test: true, name: "Test Task1", group: "Test", tooltip: "Test task 1", priority: 1)]
+    [XEditor.Tasks.Worker(name: "Test Task1", group: "Test Initialize", tooltip: "Test task 1", priority: 1)]
     [XEditor.Tasks.Param("param1", "Test param 1", "default1")]
     private class TestTask1 : XEditor.Tasks.Worker
     {
@@ -34,7 +34,7 @@ public class TestXEditorTasksInit
     /// <summary>
     /// 测试任务 2：前置任务和字段参数测试。
     /// </summary>
-    [XEditor.Tasks.Worker(test: true, name: "Test Task2", group: "Test", tooltip: "Test task 2", priority: 2, runasync: true)]
+    [XEditor.Tasks.Worker(name: "Test Task2", group: "Test Initialize", tooltip: "Test task 2", priority: 2, runasync: true)]
     [XEditor.Tasks.Pre(typeof(TestTask1))]
     private class TestTask2 : XEditor.Tasks.Worker
     {
@@ -46,7 +46,7 @@ public class TestXEditorTasksInit
     /// <summary>
     /// 测试任务 3：后置任务和非单例测试。
     /// </summary>
-    [XEditor.Tasks.Worker(test: true, name: "Test Task3", group: "Test", tooltip: "Test task 3", priority: 3)]
+    [XEditor.Tasks.Worker(name: "Test Task3", group: "Test Initialize", tooltip: "Test task 3", priority: 3)]
     [XEditor.Tasks.Post(typeof(TestTask2))]
     private class TestTask3 : XEditor.Tasks.Worker
     {
@@ -57,7 +57,7 @@ public class TestXEditorTasksInit
     /// <summary>
     /// Windows 平台特定任务测试。
     /// </summary>
-    [XEditor.Tasks.Worker(test: true, name: "Test Windows", group: "Test", tooltip: "Windows only task", platform: XEnv.PlatformType.Windows)]
+    [XEditor.Tasks.Worker(name: "Test Windows", group: "Test Initialize", tooltip: "Windows only task", platform: XEnv.PlatformType.Windows)]
     private class TestWindowsTask : XEditor.Tasks.Worker
     {
         [XEditor.Tasks.Param("winParam", "Windows param", "winDefault", platform: XEnv.PlatformType.Windows)]
@@ -68,7 +68,7 @@ public class TestXEditorTasksInit
     /// <summary>
     /// Linux 平台特定任务测试。
     /// </summary>
-    [XEditor.Tasks.Worker(test: true, name: "Test Linux", group: "Test", tooltip: "Linux only task", platform: XEnv.PlatformType.Linux)]
+    [XEditor.Tasks.Worker(name: "Test Linux", group: "Test Initialize", tooltip: "Linux only task", platform: XEnv.PlatformType.Linux)]
     private class TestLinuxTask : XEditor.Tasks.Worker
     {
         [XEditor.Tasks.Param("linuxParam", "Linux param", "linuxDefault", platform: XEnv.PlatformType.Linux)]
@@ -79,7 +79,7 @@ public class TestXEditorTasksInit
     /// <summary>
     /// macOS 平台特定任务测试。
     /// </summary>
-    [XEditor.Tasks.Worker(test: true, name: "Test macOS", group: "Test", tooltip: "macOS only task", platform: XEnv.PlatformType.macOS)]
+    [XEditor.Tasks.Worker(name: "Test macOS", group: "Test Initialize", tooltip: "macOS only task", platform: XEnv.PlatformType.macOS)]
     private class TestmacOSTask : XEditor.Tasks.Worker
     {
         [XEditor.Tasks.Param("macosParam", "macOS param", "macosDefault", platform: XEnv.PlatformType.macOS)]
@@ -290,7 +290,7 @@ public class TestXEditorTasksInit
         var testTasks = new List<XEditor.Tasks.WorkerAttribute>();
         foreach (var kvp in XEditor.Tasks.Metas)
         {
-            if (kvp.Value.Group == "Test") testTasks.Add(kvp.Value);
+            if (kvp.Value.Group == "Test Initialize") testTasks.Add(kvp.Value);
         }
         Assert.That(testTasks.Where(t => !t.Name.Contains("Windows") && !t.Name.Contains("Linux") && !t.Name.Contains("macOS")).Count(), Is.EqualTo(3), "应该解析出三个通用测试任务");
 

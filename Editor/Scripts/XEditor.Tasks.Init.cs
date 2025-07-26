@@ -197,8 +197,6 @@ namespace EFramework.Editor
                             {
                                 try
                                 {
-                                    if (meta.Test != test) continue;
-
                                     if (meta.Platform != XEnv.PlatformType.Unknown && meta.Platform != XEnv.Platform) continue;
                                     if (meta.Worker == null && typeof(IWorker).IsAssignableFrom(type))
                                     {

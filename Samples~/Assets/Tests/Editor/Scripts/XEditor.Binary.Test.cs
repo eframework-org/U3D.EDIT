@@ -3,14 +3,13 @@
 // license that can be found in the LICENSE file.
 
 #if UNITY_INCLUDE_TESTS
-using System;
 using NUnit.Framework;
-using EFramework.Editor;
-using UnityEditor;
-using EFramework.Utility;
-using System.Text.RegularExpressions;
+using System;
 using System.IO;
-using UnityEngine;
+using System.Text.RegularExpressions;
+using UnityEditor;
+using EFramework.Editor;
+using EFramework.Utility;
 
 /// <summary>
 /// XEditor.Binary 模块的单元测试类。
@@ -32,6 +31,7 @@ public class TestXEditorBinary
     /// <summary>
     /// 测试用构建类（自定义场景）。
     /// </summary>
+    [XEditor.Tasks.Worker(name: "Build Binary", group: "Test Binary")]
     public class MyBinary2 : XEditor.Binary
     {
         public const string Scene = "Assets/Temp/TestXEditorBinary/Test.unity";
@@ -66,13 +66,6 @@ public class TestXEditorBinary
     /// 测试预处理参数。
     /// </summary>
     /// <param name="type">要测试的构建类型</param>
-    /// <remarks>
-    /// 验证内容：
-    /// 1. 默认构建类的参数生成（名称格式、版本号格式、输出路径等）
-    /// 2. 自定义构建类的参数覆盖
-    /// 3. 目录创建
-    /// 4. Unity 构建设置的正确性
-    /// </remarks>
     [TestCase(typeof(XEditor.Binary), Description = "验证默认构建类的参数生成")]
     [TestCase(typeof(MyBinary), Description = "验证自定义构建类的参数覆盖")]
     public void Prepare(Type type)
@@ -168,13 +161,6 @@ public class TestXEditorBinary
     /// <summary>
     /// 测试完整构建流程。
     /// </summary>
-    /// <remarks>
-    /// 验证内容：
-    /// 1. 首选项准备和验证
-    /// 2. 构建过程执行
-    /// 3. 符号表备份
-    /// 4. 构建产物运行
-    /// </remarks>
     [Test]
     public void Execute()
     {
@@ -191,12 +177,12 @@ public class TestXEditorBinary
             XPrefs.Asset.Read(tempPrefs.File);
 
             // 构建阶段
-            var handler = new MyBinary2 { ID = "Test/Test Binary", Batchmode = Application.isBatchMode };
-            var report = XEditor.Tasks.Execute(handler);
+            var worker = XEditor.Tasks.Workers["Test Binary/Build Binary"] as MyBinary2;
+            var report = XEditor.Tasks.Execute(worker);
 
             // 验证构建结果
             Assert.That(report.Result, Is.EqualTo(XEditor.Tasks.Result.Succeeded), "构建过程应成功完成");
-            Assert.That(XFile.HasFile(handler.File) || XFile.HasDirectory(handler.File), Is.True, "应生成构建文件或目录");
+            Assert.That(XFile.HasFile(worker.File) || XFile.HasDirectory(worker.File), Is.True, "应生成构建文件或目录");
 
             // 验证符号表
             // Linux平台未生成符号表，这里不作验证
@@ -204,7 +190,7 @@ public class TestXEditorBinary
             // Assert.That(XFile.HasFile(symbolZip), Is.True, "应生成符号表压缩包");
 
             // 运行阶段
-            Assert.That(handler.Run(), Is.True, "应能成功运行构建产物");
+            Assert.That(worker.Run(), Is.True, "应能成功运行构建产物");
         }
         finally
         {

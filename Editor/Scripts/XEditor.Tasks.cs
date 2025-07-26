@@ -641,11 +641,6 @@ namespace EFramework.Editor
                 public List<Param> Params;
 
                 /// <summary>
-                /// Test 表示是否为单元测试任务。
-                /// </summary>
-                internal bool Test;
-
-                /// <summary>
                 /// 初始化任务特性。
                 /// </summary>
                 /// <param name="name">任务名称</param>
@@ -657,7 +652,7 @@ namespace EFramework.Editor
                 /// <param name="platform">任务适用的平台类型</param>
                 /// <param name="worker">任务工作者类型</param>
                 public WorkerAttribute(string name, string group = "Unknown", string tooltip = "", int priority = 0, bool singleton = true,
-                    bool runasync = false, XEnv.PlatformType platform = XEnv.PlatformType.Unknown, Type worker = null, bool test = false)
+                    bool runasync = false, XEnv.PlatformType platform = XEnv.PlatformType.Unknown, Type worker = null)
                 {
                     if (string.IsNullOrEmpty(name)) throw new ArgumentNullException("name");
                     Name = name;
@@ -668,7 +663,6 @@ namespace EFramework.Editor
                     Runasync = runasync;
                     Platform = platform;
                     Worker = worker;
-                    Test = test;
                 }
             }
         }
