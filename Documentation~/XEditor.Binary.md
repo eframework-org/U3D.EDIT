@@ -191,35 +191,6 @@ public override void Postprocess(Tasks.Report report)
 }
 ```
 
-### 3. 可视化面板
-
-#### 3.1 界面布局
-
-```
-+-----------------------+
-|         Search        |
-+-----------------------+
-|    Name  Path  Run    |
-|    Name  Path  Run    |
-|          ...          |
-+-----------------------+
-```
-
-#### 3.2 操作说明
-
-| 功能 | 操作 | 说明 |
-|------|------|------|
-| 搜索 | 输入关键字 | 按名称过滤构建文件 |
-| 重命名 | 双击名称 | 修改构建文件名称 |
-| 打开目录 | Path 按钮 | 打开构建文件所在目录 |
-| 运行程序 | Run 按钮 | 运行或安装构建文件 |
-
-```csharp
-// 运行构建文件示例
-var handler = new XEditor.Binary();
-handler.Run(path: "path/to/build", name: "build_name");
-```
-
 ## 常见问题
 
 ### 1. Unity 6.0 构建配置恢复失败

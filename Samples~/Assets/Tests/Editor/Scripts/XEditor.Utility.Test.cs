@@ -125,7 +125,7 @@ public class TestXEditorUtility
     public void FindPackage()
     {
         // 验证 FindPackage 方法是否正确找到包信息
-        var package = XEditor.Utility.FindPackage();
+        var package = XEditor.Utility.FindPackage(typeof(XEditor).Assembly);
 
         // 验证返回的包信息是否不为空
         Assert.That(package, Is.Not.Null, "包信息应不为空");

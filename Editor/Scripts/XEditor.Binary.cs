@@ -95,22 +95,6 @@ namespace EFramework.Editor
         /// 
         /// 2.3 后处理阶段
         ///     - 恢复 BuildProfile 配置
-        /// 
-        /// 3. 可视化面板
-        /// 3.1 界面布局
-        ///     +-----------------------+
-        ///     |         Search        |
-        ///     +-----------------------+
-        ///     |    Name  Path  Run    |
-        ///     |    Name  Path  Run    |
-        ///     |          ...          |
-        ///     +-----------------------+
-        /// 
-        /// 3.2 操作说明
-        ///     - 搜索：按名称过滤构建文件
-        ///     - 重命名：双击名称修改
-        ///     - 打开目录：Path 按钮打开构建文件目录
-        ///     - 运行程序：Run 按钮运行/安装构建文件
         /// </code>
         /// 更多信息请参考模块文档。
         /// </remarks>
@@ -620,7 +604,7 @@ namespace EFramework.Editor
                     XEnv.Platform == XEnv.PlatformType.macOS)
                 {
                     var bin = "";
-                    if (XFile.HasFile(path)) bin = path;
+                    if (XFile.HasFile(path) || XFile.HasDirectory(path)) bin = path;
                     else
                     {
                         var dirs = Directory.GetDirectories(path);
@@ -631,17 +615,31 @@ namespace EFramework.Editor
                                 bin = Path.GetFileName(dir).Replace("_Data", "");
                             }
                         }
-                        var files = Directory.GetFiles(path);
-                        foreach (var file in files)
+                        if (XEnv.Platform == XEnv.PlatformType.macOS)
                         {
-                            if (Path.GetFileNameWithoutExtension(file) == bin)
+                            foreach (var dir in dirs)
                             {
-                                bin = file;
-                                break;
+                                if (Path.GetFileNameWithoutExtension(dir) == bin)
+                                {
+                                    bin = file;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            var files = Directory.GetFiles(path);
+                            foreach (var file in files)
+                            {
+                                if (Path.GetFileNameWithoutExtension(file) == bin)
+                                {
+                                    bin = file;
+                                    break;
+                                }
                             }
                         }
                     }
-                    if (!XFile.HasFile(bin))
+                    if (!XFile.HasFile(bin) && !XFile.HasDirectory(bin))
                     {
                         XLog.Error("XEditor.Binary.Run: cannot found executable file: {0}.", path);
                         return false;

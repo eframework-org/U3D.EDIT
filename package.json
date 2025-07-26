@@ -24,6 +24,27 @@
     "unity",
     "util"
   ],
+  "files": [
+    ".puer",
+    "Editor",
+    "Editor.meta",
+    "Plugins",
+    "Plugins.meta",
+    "Runtime",
+    "Runtime.meta",
+    "Documentation~",
+    "Samples~",
+    "CHANGELOG.md",
+    "CHANGELOG.md.meta",
+    "LICENSE.md",
+    "LICENSE.md.meta",
+    "package.json",
+    "package.json.meta",
+    "README.md",
+    "README.md.meta",
+    "Third Party Notices.md",
+    "Third Party Notices.md.meta"
+  ],
   "dependencies": {
     "org.eframework.u3d.util": "0.1.7"
   }
