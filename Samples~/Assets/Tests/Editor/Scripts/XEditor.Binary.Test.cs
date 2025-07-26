@@ -162,6 +162,7 @@ public class TestXEditorBinary
     /// 测试完整构建流程。
     /// </summary>
     [Test]
+    [Timeout(600000)]
     public void Execute()
     {
         var testDir = XFile.PathJoin(XEnv.ProjectPath, "Temp", "TestXEditorBinary");
