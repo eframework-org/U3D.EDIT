@@ -1,7 +1,10 @@
 # 更新记录
 
 ## [0.1.8] - 
-## 修复
+### 变更
+- 优化 Utility 模块的 ShowInExplorer 函数在 Windows 和 macOS 平台的实现
+
+### 修复
 - 修复 Binary 模块在 macOS 平台的若干适配问题
 
 ## [0.1.7] - 2025-07-07

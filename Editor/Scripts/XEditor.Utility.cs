@@ -99,28 +99,28 @@ namespace EFramework.Editor
         public class Utility : Event.Internal.OnEditorUpdate
         {
             /// <summary>
-            /// Toast 提示框类，用于在编辑器中显示临时提示信息。
+            /// Toast 是提示框类，用于在编辑器中显示临时提示信息。
             /// </summary>
             internal class Toast
             {
                 /// <summary>
-                /// Toast 的可视化元素，用于显示提示内容。
+                /// View 是 Toast 的可视化元素，用于显示提示内容。
                 /// </summary>
                 public VisualElement View;
 
                 /// <summary>
-                /// Toast 的显示时间，单位为秒。
+                /// Duration 是 Toast 的显示时间，单位为秒。
                 /// </summary>
                 public double Duration;
             }
 
             /// <summary>
-            /// 当前活动的 Toast 列表。
+            /// activeToasts 维护当前活动的 Toast 列表。
             /// </summary>
             internal static readonly List<Toast> activeToasts = new();
 
             /// <summary>
-            /// Unity 控制台窗口的引用。
+            /// consoleWindow 是对 Unity 控制台窗口的引用。
             /// </summary>
             internal static EditorWindow consoleWindow;
 
@@ -165,7 +165,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 在控制台窗口显示提示框。
+            /// ShowToast 在控制台窗口显示提示框。
             /// </summary>
             /// <param name="content">提示内容。</param>
             /// <param name="focus">是否聚焦到控制台窗口，默认为 false。</param>
@@ -206,7 +206,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 递归收集指定目录下的所有文件。
+            /// CollectFiles 递归收集指定目录下的所有文件。
             /// </summary>
             /// <param name="directory">要收集的目录路径。</param>
             /// <param name="outfiles">输出的文件列表。</param>
@@ -260,7 +260,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 递归收集指定目录下的所有 Unity 资源文件。
+            /// CollectAssets 递归收集指定目录下的所有 Unity 资源文件。
             /// </summary>
             /// <param name="directory">要收集的目录路径。</param>
             /// <param name="outfiles">输出的资源文件列表。</param>
@@ -328,7 +328,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 收集指定资源文件的所有依赖项。
+            /// CollectDependency 收集指定资源文件的所有依赖项。
             /// </summary>
             /// <param name="sourceAssets">源资源文件列表。</param>
             /// <returns>返回依赖关系字典，key 为源资源路径，value 为依赖项列表。</returns>
@@ -352,7 +352,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 获取当前在 Unity 编辑器中选中的资源文件。
+            /// GetSelectedAssets 获取当前在 Unity 编辑器中选中的资源文件。
             /// </summary>
             /// <param name="filter">资源过滤器，用于筛选特定资源。</param>
             /// <returns>返回选中的资源路径列表。</returns>
@@ -391,7 +391,7 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 将指定目录压缩为 ZIP 文件。
+            /// ZipDirectory 将指定目录压缩为 ZIP 文件。
             /// </summary>
             /// <param name="dir">要压缩的目录路径。</param>
             /// <param name="zip">输出的 ZIP 文件路径。</param>
@@ -421,49 +421,64 @@ namespace EFramework.Editor
             }
 
             /// <summary>
-            /// 获取 Unity 编辑器程序集。
+            /// GetEditorAssembly 获取 Unity 编辑器程序集。
             /// </summary>
             /// <returns>返回 UnityEditor 程序集。</returns>
             public static Assembly GetEditorAssembly() { return Assembly.GetAssembly(typeof(EditorWindow)); }
 
             /// <summary>
-            /// 通过反射获取 Unity 编辑器中的类型。
+            /// GetEditorClass 通过反射获取 Unity 编辑器中的类型。
             /// </summary>
             /// <param name="name">类型的完整名称。</param>
             /// <returns>返回对应的类型。</returns>
             public static Type GetEditorClass(string name) { return GetEditorAssembly().GetType(name); }
 
             /// <summary>
-            /// 在系统文件浏览器中显示指定的文件或文件夹。
+            /// ShowInExplorer 在系统文件浏览器中显示指定的文件或文件夹。
             /// </summary>
             /// <param name="path">要显示的文件或文件夹路径。</param>
             public static void ShowInExplorer(string path)
             {
-                if (!string.IsNullOrEmpty(path))
+                if (string.IsNullOrEmpty(path)) return;
+
+                try
                 {
                     path = Path.GetFullPath(path);
-                    if (File.Exists(path))
+                    if (XFile.HasFile(path))
                     {
                         if (Application.platform == RuntimePlatform.WindowsEditor)
                         {
-                            try
-                            {
-                                var proc = new ProcessStartInfo("Explorer.exe");
-                                proc.Arguments = "/e,/select," + path;
-                                Process.Start(proc);
-                                return;
-                            }
-                            catch (Exception e) { XLog.Panic(e); }
+                            Process.Start("explorer.exe", $"/e,/select,\"{path}\"");
                         }
-                        EditorUtility.OpenWithDefaultApp(Path.GetDirectoryName(path));
-                        return;
+                        else if (Application.platform == RuntimePlatform.OSXEditor)
+                        {
+                            Process.Start("open", $"-R \"{path}\"");
+                        }
+                        else EditorUtility.OpenWithDefaultApp(Path.GetDirectoryName(path));
                     }
+                    else if (Directory.Exists(path))
+                    {
+                        if (Application.platform == RuntimePlatform.WindowsEditor)
+                        {
+                            Process.Start("explorer.exe", $"\"{path}\"");
+                        }
+                        else if (Application.platform == RuntimePlatform.OSXEditor)
+                        {
+                            if (path.EndsWith(".app")) Process.Start("open", $"-R \"{path}\"");
+                            else Process.Start("open", $"\"{path}\"");
+                        }
+                        else EditorUtility.OpenWithDefaultApp(path);
+                    }
+                }
+                catch (Exception e)
+                {
+                    XLog.Panic(e);
                     EditorUtility.OpenWithDefaultApp(path);
                 }
             }
 
             /// <summary>
-            /// 查找指定程序集所属的 Unity 包信息。
+            /// FindPackage 查找指定程序集所属的 Unity 包信息。
             /// </summary>
             /// <param name="assembly">要查找的程序集，默认为调用者所在的程序集。</param>
             /// <returns>返回包信息。</returns>
