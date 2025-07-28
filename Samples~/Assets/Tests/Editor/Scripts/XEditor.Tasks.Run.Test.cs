@@ -317,7 +317,6 @@ public class TestXEditorTasksRun
         Assert.That(report.Phases[5].Error, Is.Not.Null);
     }
 
-#if UNITY_6000_0_OR_NEWER
     /// <summary>
     /// Batch 测试批处理任务执行。
     /// </summary>
@@ -546,7 +545,6 @@ public class TestXEditorTasksRun
             XEnv.ParseArgs(reset: true);
         }
     }
-#endif
-#endregion
+    #endregion
 }
 #endif

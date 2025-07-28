@@ -96,7 +96,6 @@ public class TestXEditorTitle
 #endif
     }
 
-#if UNITY_6000_0_OR_NEWER
     /// <summary>
     /// 测试标题刷新功能。
     /// </summary>
@@ -121,6 +120,5 @@ public class TestXEditorTitle
         if (task.Result.Code == 0) Assert.That(XEditor.Title.gitBranch, Is.Not.Empty); // 在 Git 仓库中
         else Assert.That(XEditor.Title.gitBranch, Is.Empty); // 不在 Git 仓库中
     }
-#endif
 }
 #endif

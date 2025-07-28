@@ -200,7 +200,6 @@ public class TestXEditorTasksPanel
         }
     }
 
-#if UNITY_6000_0_OR_NEWER
     /// <summary>
     /// 测试任务执行功能。
     /// </summary>
@@ -281,7 +280,6 @@ public class TestXEditorTasksPanel
             XEditor.Tasks.Panel.Reset();
         }
     }
-#endif
     #endregion
 }
 #endif
